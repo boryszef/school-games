@@ -45,13 +45,18 @@ src/core/
 src/i18n/pl.js, en.js      core strings
 src/screens/home.js        game tiles from the registry
 src/screens/players.js     choose or create a player; best time, last runs, most-missed products
+src/screens/header.js, game.js, not-found.js
+src/core/app.js            app state, persistence, dictionaries, screen dispatch
+src/core/format.js         m:ss.t time formatting
 src/games/robot-maze/
   index.js                 game definition + mount(); wires the modules below
   maze.js                  pure: generateMaze(rng) → walls per cell (recursive backtracker)
   path.js                  pure: shortestPath(maze, from, to) (BFS)
   robots.js                pure: placeRobots(path, count, rng): 10 distinct cells, not start or exit
   state.js                 pure: game state + reducer (move, answer, finish)
-  render.js                DOM: CSS-grid board with axis labels 1–10, player, robots, exit
+  board.js                 DOM: CSS-grid board with axis labels 1–10, player, robots, exit
+  challenge.js             DOM: "r × c = ?" overlay with input + numpad
+  result.js                DOM: finish overlay (time, mistakes, record)
   i18n.js                  game strings (pl/en)
   style.css
 src/core/random.js         seeded RNG (mulberry32) so the logic is deterministic in tests
