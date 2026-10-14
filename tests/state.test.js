@@ -8,7 +8,7 @@ import { PENALTY_MS, answer, createGame, move } from "../src/games/robot-maze/st
 /** @typedef {import("../src/games/robot-maze/state.js").GameState} GameState */
 /** @typedef {import("../src/games/robot-maze/maze.js").Position} Position */
 
-const newGame = () => createGame({ size: 10, robotCount: 10, rng: createRng(21) });
+const newGame = (seed = 21) => createGame({ size: 10, robotCount: 10, rng: createRng(seed) });
 
 /**
  * @param {GameState} state
@@ -55,7 +55,7 @@ test("moving into a wall leaves the player in place", () => {
 });
 
 test("moving through an open passage without a robot moves the player", () => {
-  const state = newGame();
+  const state = newGame(1); // seed 1: the start has a robot-free open neighbour
   const robotKeys = new Set(state.robots.map((r) => `${r.row},${r.col}`));
   const free = DIRECTIONS.find((d) => {
     const next = stepFrom(state.player, d);
