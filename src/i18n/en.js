@@ -32,7 +32,7 @@ export default {
   "lobby.pasteLabel": "Your friend's link",
   "lobby.pastePlaceholder": "Paste the link",
   "lobby.connect": "Connect",
-  "lobby.connecting": "Connecting…",
+  "lobby.connecting": "Connecting… {seconds} s",
   "lobby.joinTitle": "Join the game",
   "lobby.joinHelp": "Show this code to your friend so they can scan it, or send them the link.",
   "lobby.waitingForHost": "Waiting for your friend…",
@@ -46,4 +46,7 @@ export default {
   "lobby.copy": "Copy",
   "lobby.copied": "Copied!",
   "lobby.home": "Back to games",
+  "lobby.timedOut":
+    "Could not connect within {seconds} seconds. Your networks may block direct connections. Try again with both devices on the same Wi-Fi.",
+  "lobby.tryAgain": "Try again with a new invitation",
 };

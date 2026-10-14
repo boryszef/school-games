@@ -32,7 +32,7 @@ export default {
   "lobby.pasteLabel": "Link od drugiej osoby",
   "lobby.pastePlaceholder": "Wklej link",
   "lobby.connect": "Połącz",
-  "lobby.connecting": "Łączę…",
+  "lobby.connecting": "Łączę… {seconds} s",
   "lobby.joinTitle": "Dołącz do gry",
   "lobby.joinHelp":
     "Pokaż ten kod osobie, która cię zaprosiła, żeby go zeskanowała, albo wyślij jej link.",
@@ -47,4 +47,7 @@ export default {
   "lobby.copy": "Kopiuj",
   "lobby.copied": "Skopiowano!",
   "lobby.home": "Wróć do gier",
+  "lobby.timedOut":
+    "Nie udało się połączyć w ciągu {seconds} sekund. Wasze sieci mogą blokować bezpośrednie połączenia. Spróbujcie jeszcze raz z oboma urządzeniami w tej samej sieci Wi-Fi.",
+  "lobby.tryAgain": "Spróbuj ponownie z nowym zaproszeniem",
 };

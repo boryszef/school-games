@@ -278,3 +278,10 @@ select {
   color: var(--danger);
   min-height: 1.5em;
 }
+
+.lobby-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}

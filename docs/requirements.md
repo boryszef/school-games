@@ -47,7 +47,7 @@ Education games is a static web app (HTML, CSS and ES-module JavaScript with no 
 
 ## R6 – Peer-to-peer (two-player games)
 
-- R6.1 Two browsers connect directly over a WebRTC data channel. No server of ours is involved. The only outside service is a public STUN server (`stun:stun.l.google.com:19302`). There is no TURN relay, so some strict networks cannot connect, and the UI then shows a "could not connect" message.
+- R6.1 Two browsers connect directly over a WebRTC data channel. No server of ours is involved. The only outside service is a public STUN server (`stun:stun.l.google.com:19302`). There is no TURN relay, so some strict networks cannot connect, and the UI then shows a "could not connect" message. After the host receives the answer, it waits up to 60 s for the connection and shows a countdown meanwhile. If the time runs out, it shows a timeout message with "Try again" (a new invitation) and "Back to games". The guest waits with no time limit.
 - R6.2 The host creates an offer and shows it as an invitation link `#/game/<id>/join/<code>` with a QR code and a copy button. The UI tells the host to keep the tab open.
 - R6.3 The guest opens the invitation and gets an answer link `#/game/<id>/answer/<code>` with a QR code and a copy button.
 - R6.4 The answer reaches the host either by opening the answer link in the host's browser (a new tab forwards it to the waiting game tab through BroadcastChannel and says "go back to the game tab", or that no game is waiting) or by pasting the link or code into a box in the host tab.

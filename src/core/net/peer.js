@@ -15,10 +15,17 @@ import { InvalidCodeError, decodeDescription, encodeDescription } from "./sdp-co
  * @property {() => void} close
  */
 
+/**
+ * `timeout`: the channel did not open in time; `failed`: the browser gave up on the connection.
+ * @typedef {"timeout" | "failed"} FailureReason
+ */
+
 export class ConnectionFailedError extends Error {
-  constructor() {
-    super("Could not connect to the other player");
+  /** @param {FailureReason} reason */
+  constructor(reason) {
+    super(`Could not connect to the other player (${reason})`);
     this.name = "ConnectionFailedError";
+    this.reason = reason;
   }
 }
 
@@ -26,7 +33,7 @@ const ICE_SERVERS = [{ urls: "stun:stun.l.google.com:19302" }];
 /** Gathering can hang on an unreachable STUN server; after this the code uses what was found. */
 const GATHERING_CAP_MS = 3000;
 /** How long the host waits for the channel to open after receiving the answer. */
-const CONNECT_TIMEOUT_MS = 20000;
+export const CONNECT_TIMEOUT_MS = 60000;
 const SESSION_ID_BYTES = 6;
 
 /** The inviting side: makes the offer code and accepts the answer code. */
@@ -136,13 +143,17 @@ function _gathered(connection) {
  */
 function _whenOpen(connection, dataChannel, timeoutMs) {
   return new Promise((resolve, reject) => {
-    const fail = () => {
+    /** @param {FailureReason} reason */
+    const fail = (reason) => {
+      clearTimeout(timer);
       connection.close();
-      reject(new ConnectionFailedError());
+      reject(new ConnectionFailedError(reason));
     };
-    const timer = timeoutMs === null ? undefined : setTimeout(fail, timeoutMs);
+    const timer = timeoutMs === null ? undefined : setTimeout(() => fail("timeout"), timeoutMs);
     connection.addEventListener("connectionstatechange", () => {
-      if (connection.connectionState === "failed" && dataChannel.readyState !== "open") fail();
+      if (connection.connectionState === "failed" && dataChannel.readyState !== "open") {
+        fail("failed");
+      }
     });
     dataChannel.addEventListener("open", () => {
       clearTimeout(timer);

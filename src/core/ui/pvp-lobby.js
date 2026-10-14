@@ -1,6 +1,6 @@
 import { log } from "../log.js";
 import { deliverAnswer, listenForAnswer } from "../net/answer-relay.js";
-import { ConnectionFailedError, hostPeer, joinPeer } from "../net/peer.js";
+import { CONNECT_TIMEOUT_MS, ConnectionFailedError, hostPeer, joinPeer } from "../net/peer.js";
 import { InvalidCodeError } from "../net/sdp-code.js";
 import { h } from "./dom.js";
 import { createQrCode } from "./qr.js";
@@ -64,15 +64,66 @@ function _splitArg(arg) {
  */
 
 /**
+ * Invites; after a timeout the player can retry with a fresh invitation.
  * @param {Show} show
  * @param {Problem} problem
  * @param {{gameId: string, t: Translate}} options
  */
 function _host(show, problem, { gameId, t }) {
+  let closeAttempt = () => {};
+  /** @type {Promise<Connection>} */
+  const connected = new Promise((resolve) => {
+    const attempt = () => {
+      closeAttempt = _hostAttempt(show, problem, {
+        gameId,
+        t,
+        onConnected: resolve,
+        onTimeout: timedOut,
+      });
+    };
+    const timedOut = () => {
+      const retry = h("button", { type: "button", class: "button" }, t("lobby.tryAgain"));
+      retry.addEventListener("click", () => {
+        closeAttempt();
+        attempt();
+      });
+      show(
+        h("p", { class: "notice" }, t("lobby.timedOut", { seconds: CONNECT_TIMEOUT_MS / 1000 })),
+        h(
+          "div",
+          { class: "lobby-actions" },
+          retry,
+          h("a", { href: "#/", class: "button secondary" }, t("lobby.home")),
+        ),
+      );
+    };
+    attempt();
+  });
+  return { connected, close: () => closeAttempt() };
+}
+
+/**
+ * @typedef {object} HostAttemptOptions
+ * @property {string} gameId
+ * @property {Translate} t
+ * @property {(connection: Connection) => void} onConnected
+ * @property {() => void} onTimeout
+ */
+
+/**
+ * One invitation: shows it, takes the answer from the relay or the paste box, and counts down
+ * while connecting.
+ * @param {Show} show
+ * @param {Problem} problem
+ * @param {HostAttemptOptions} options
+ * @returns {() => void} Closes the attempt.
+ */
+function _hostAttempt(show, problem, { gameId, t, onConnected, onTimeout }) {
   const peer = hostPeer();
-  let stopListening = () => {};
   /** The relay and the paste box can both bring an answer; only the first one counts. */
   let accepted = false;
+  /** @type {ReturnType<typeof setInterval> | undefined} */
+  let countdown;
   const pasted = h("input", {
     class: "lobby-paste",
     autocomplete: "off",
@@ -88,30 +139,42 @@ function _host(show, problem, { gameId, t }) {
   );
   show(h("h2", {}, t("lobby.inviteTitle")), h("p", {}, t("lobby.preparing")));
 
-  /** @type {Promise<Connection>} */
-  const connected = new Promise((resolve) => {
-    /** @param {string} input A pasted answer link or bare code. */
-    const accept = async (input) => {
-      if (accepted) return;
-      const answerCode = input.trim().replace(/^.*\/answer\//, "");
-      try {
-        const connecting = peer.accept(answerCode);
-        accepted = true;
-        stopListening();
-        show(h("p", {}, t("lobby.connecting")));
-        resolve({ role: "host", channel: await connecting });
-      } catch (error) {
-        if (error instanceof InvalidCodeError) pasteError.textContent = t("lobby.invalidAnswer");
-        else if (error instanceof ConnectionFailedError) problem("lobby.failed");
-        else throw error;
-      }
-    };
-    form.addEventListener("submit", (event) => {
-      event.preventDefault();
-      accept(pasted.value);
-    });
-    stopListening = listenForAnswer(peer.sessionId, accept);
+  /** @param {string} input A pasted answer link or bare code. */
+  const accept = async (input) => {
+    if (accepted) return;
+    const answerCode = input.trim().replace(/^.*\/answer\//, "");
+    try {
+      const connecting = peer.accept(answerCode);
+      accepted = true;
+      stopListening();
+      showCountdown();
+      onConnected({ role: "host", channel: await connecting });
+    } catch (error) {
+      if (error instanceof InvalidCodeError) pasteError.textContent = t("lobby.invalidAnswer");
+      else if (!(error instanceof ConnectionFailedError)) throw error;
+      else if (error.reason === "timeout") onTimeout();
+      else problem("lobby.failed");
+    } finally {
+      clearInterval(countdown);
+    }
+  };
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    accept(pasted.value);
   });
+  const stopListening = listenForAnswer(peer.sessionId, accept);
+
+  function showCountdown() {
+    let seconds = CONNECT_TIMEOUT_MS / 1000;
+    const status = h("p", { "aria-live": "polite" });
+    const render = () => (status.textContent = t("lobby.connecting", { seconds }));
+    render();
+    show(status);
+    countdown = setInterval(() => {
+      seconds = Math.max(0, seconds - 1);
+      render();
+    }, 1000);
+  }
 
   peer.offerCode.then((offerCode) => {
     show(
@@ -126,12 +189,10 @@ function _host(show, problem, { gameId, t }) {
     );
   });
 
-  return {
-    connected,
-    close() {
-      stopListening();
-      peer.close();
-    },
+  return () => {
+    clearInterval(countdown);
+    stopListening();
+    peer.close();
   };
 }
 
