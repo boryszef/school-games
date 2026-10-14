@@ -1,0 +1,33 @@
+# Install once: `uv tool install pre-commit && pre-commit install`
+# Hooks call the pinned npm dev tools, so run `npm ci` first.
+repos:
+  - repo: local
+    hooks:
+      - id: prettier
+        name: prettier
+        entry: npx prettier --check
+        language: system
+        types_or: [javascript, json, css, html, markdown, yaml]
+      - id: eslint
+        name: eslint
+        entry: npx eslint
+        language: system
+        types: [javascript]
+      - id: typecheck
+        name: tsc --checkJs
+        entry: npm run typecheck
+        language: system
+        pass_filenames: false
+        types: [javascript]
+      - id: knip
+        name: knip (dead code)
+        entry: npm run deadcode
+        language: system
+        pass_filenames: false
+        types: [javascript]
+      - id: tests
+        name: node --test
+        entry: npm test
+        language: system
+        pass_filenames: false
+        types: [javascript]
