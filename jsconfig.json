@@ -8,7 +8,9 @@
     "checkJs": true,
     "allowJs": true,
     "strict": true,
-    "noEmit": true
+    "noEmit": true,
+    "skipLibCheck": true,
+    "maxNodeModuleJsDepth": 0
   },
   "include": ["src/**/*.js", "tests/**/*.js"]
 }
