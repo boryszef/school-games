@@ -1,4 +1,4 @@
-# School Games: plan for the first game, "Robot Maze" (10×10 multiplication)
+# Education games: plan for the first game, "Robot Maze" (10×10 multiplication)
 
 ## Summary
 

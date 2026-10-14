@@ -1,5 +1,5 @@
 export default {
-  "app.title": "School Games",
+  "app.title": "Education games",
   "header.choosePlayer": "Choose player",
   "header.language": "Language",
   "home.title": "Choose a game",
