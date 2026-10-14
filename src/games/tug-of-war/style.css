@@ -1,0 +1,164 @@
+.tw {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.tw-goal-text {
+  max-width: 560px;
+  text-align: center;
+  color: var(--muted);
+}
+
+.tw-rope {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+  width: min(100%, 560px);
+  margin: 8px 0;
+}
+
+.tw-name {
+  font-weight: 700;
+  max-width: 7em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tw-name.is-me {
+  color: var(--accent);
+}
+
+.tw-track {
+  position: relative;
+  height: 48px;
+}
+
+.tw-line {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 8px;
+  margin-top: -4px;
+  border-radius: 4px;
+  background: repeating-linear-gradient(45deg, #c69c6d 0 6px, #a87b4f 6px 12px);
+}
+
+.tw-goal {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  border-radius: 2px;
+  background: var(--border);
+}
+
+.tw-goal.is-left {
+  left: 0;
+  background: var(--accent);
+}
+
+.tw-goal.is-right {
+  right: 0;
+  background: var(--danger);
+}
+
+.tw-knot {
+  position: absolute;
+  top: 50%;
+  width: 24px;
+  height: 24px;
+  margin: -12px 0 0 -12px;
+  border: 3px solid var(--surface);
+  border-radius: 50%;
+  background: var(--danger);
+  transition: left 0.6s cubic-bezier(0.3, 1.6, 0.6, 1);
+}
+
+.tw-status {
+  min-height: 1.6em;
+  margin: 4px 0 12px;
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+.tw-stage {
+  width: min(100%, 320px);
+}
+
+.tw-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  text-align: center;
+}
+
+.tw-card p {
+  margin: 0;
+}
+
+.tw-question {
+  min-height: 1.3em;
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.tw-answer {
+  font-size: 1.6rem;
+  text-align: center;
+}
+
+.tw-feedback {
+  min-height: 1.5em;
+  font-weight: 600;
+}
+
+.tw-card.shake {
+  animation: tw-shake 0.4s;
+}
+
+@keyframes tw-shake {
+  25% {
+    transform: translateX(-8px);
+  }
+  50% {
+    transform: translateX(8px);
+  }
+  75% {
+    transform: translateX(-4px);
+  }
+}
+
+.tw-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgb(0 0 0 / 0.35);
+}
+
+.tw-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: min(90%, 300px);
+  padding: 16px;
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  text-align: center;
+}
+
+.tw-panel h2,
+.tw-panel p {
+  margin: 0;
+}

@@ -22,4 +22,28 @@ export default {
   "dpad.down": "Down",
   "dpad.left": "Left",
   "dpad.right": "Right",
+  "lobby.inviteTitle": "Invite a friend",
+  "lobby.preparing": "Preparing…",
+  "lobby.inviteHelp": "Your friend scans this code with their camera, or you send them the link.",
+  "lobby.keepOpen": "Keep this tab open until you are connected.",
+  "lobby.answerTitle": "Your friend's answer",
+  "lobby.answerHelp":
+    "Your friend will get a code too. Scan it with the camera on this device, or paste their link here:",
+  "lobby.pasteLabel": "Your friend's link",
+  "lobby.pastePlaceholder": "Paste the link",
+  "lobby.connect": "Connect",
+  "lobby.connecting": "Connecting…",
+  "lobby.joinTitle": "Join the game",
+  "lobby.joinHelp": "Show this code to your friend so they can scan it, or send them the link.",
+  "lobby.waitingForHost": "Waiting for your friend…",
+  "lobby.answerDelivered": "Done! Go back to the game tab.",
+  "lobby.noWaitingGame":
+    "No game in this browser is waiting for this answer. Paste the link into the game tab of the player who sent the invitation.",
+  "lobby.invalidInvite": "This invitation is not valid. Ask for a new one.",
+  "lobby.invalidAnswer": "This answer is not valid for this invitation.",
+  "lobby.failed":
+    "Could not connect. Some networks block direct connections; try again with both devices on the same Wi-Fi.",
+  "lobby.copy": "Copy",
+  "lobby.copied": "Copied!",
+  "lobby.home": "Back to games",
 };

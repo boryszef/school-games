@@ -38,7 +38,7 @@ function _playerList(app) {
             class: id === data.currentPlayerId ? "player is-current" : "player",
             onclick: () => {
               app.update((d) => selectPlayer(d, id));
-              app.refresh();
+              _playerChosen(app);
             },
           },
           player.name,
@@ -68,9 +68,20 @@ function _newPlayerForm(app) {
     if (trimmed === "") return;
     const id = `p${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
     app.update((d) => selectPlayer(addPlayer(d, trimmed, id), id));
-    app.refresh();
+    _playerChosen(app);
   });
   return form;
+}
+
+/**
+ * Goes back to the page that asked for a player, or shows the chosen player's stats.
+ * @param {App} app
+ */
+function _playerChosen(app) {
+  const target = app.returnHash;
+  app.returnHash = null;
+  if (target === null) app.refresh();
+  else app.navigate(target);
 }
 
 /**

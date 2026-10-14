@@ -22,6 +22,8 @@ import { renderNotFound } from "../screens/not-found.js";
  * @property {(change: (data: AppData) => AppData) => void} update Applies and persists a change.
  * @property {(hash: string) => void} navigate
  * @property {() => void} refresh Re-renders the header and the current screen.
+ * @property {string | null} returnHash Where to go once a player is chosen, e.g. an invitation
+ *   link opened before choosing one.
  */
 /** @typedef {(root: HTMLElement, app: App, route: Route) => () => void} Screen Returns unmount. */
 
@@ -56,6 +58,7 @@ export function startApp(header, main) {
       location.hash = hash;
     },
     refresh: render,
+    returnHash: null,
   };
 
   function render() {

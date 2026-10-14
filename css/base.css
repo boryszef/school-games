@@ -8,7 +8,7 @@
 @font-face {
   font-family: "Education Games Emoji";
   src: url("../fonts/emoji-subset.woff2") format("woff2");
-  unicode-range: U+1F9D2, U+1F916, U+1F3C1, U+1F3C6, U+1F464, U+1F393, U+23F1, U+FE0F;
+  unicode-range: U+1F9D2, U+1F916, U+1F3C1, U+1F3C6, U+1F464, U+1F393, U+23F1, U+FE0F, U+1FAA2;
 }
 
 :root {
@@ -233,4 +233,48 @@ select {
 }
 .dpad-right {
   grid-area: right;
+}
+
+/* Connecting two players (shared by two-player games). */
+.lobby {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.lobby-qr {
+  width: min(100%, 280px);
+  padding: 8px;
+  border-radius: var(--radius);
+  background: #fff;
+}
+
+.qr-code {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.lobby-link-row,
+.lobby-paste-form {
+  display: flex;
+  gap: 8px;
+  width: min(100%, 480px);
+  margin-top: 12px;
+}
+
+.lobby-link,
+.lobby-paste {
+  flex: 1;
+  min-width: 0;
+}
+
+.lobby-keep-open {
+  color: var(--muted);
+}
+
+.lobby-error {
+  color: var(--danger);
+  min-height: 1.5em;
 }

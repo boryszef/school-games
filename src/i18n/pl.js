@@ -22,4 +22,29 @@ export default {
   "dpad.down": "W dół",
   "dpad.left": "W lewo",
   "dpad.right": "W prawo",
+  "lobby.inviteTitle": "Zaproś kolegę lub koleżankę",
+  "lobby.preparing": "Przygotowuję…",
+  "lobby.inviteHelp": "Druga osoba skanuje ten kod aparatem albo wysyłasz jej link.",
+  "lobby.keepOpen": "Nie zamykaj tej karty, dopóki nie połączycie się.",
+  "lobby.answerTitle": "Odpowiedź drugiej osoby",
+  "lobby.answerHelp":
+    "Druga osoba też dostanie kod. Zeskanuj go aparatem na tym urządzeniu albo wklej tutaj jej link:",
+  "lobby.pasteLabel": "Link od drugiej osoby",
+  "lobby.pastePlaceholder": "Wklej link",
+  "lobby.connect": "Połącz",
+  "lobby.connecting": "Łączę…",
+  "lobby.joinTitle": "Dołącz do gry",
+  "lobby.joinHelp":
+    "Pokaż ten kod osobie, która cię zaprosiła, żeby go zeskanowała, albo wyślij jej link.",
+  "lobby.waitingForHost": "Czekam na drugą osobę…",
+  "lobby.answerDelivered": "Gotowe! Wróć do karty z grą.",
+  "lobby.noWaitingGame":
+    "Żadna gra w tej przeglądarce nie czeka na tę odpowiedź. Wklej link w karcie z grą u osoby, która wysłała zaproszenie.",
+  "lobby.invalidInvite": "To zaproszenie jest nieprawidłowe. Poproś o nowe.",
+  "lobby.invalidAnswer": "Ta odpowiedź nie pasuje do tego zaproszenia.",
+  "lobby.failed":
+    "Nie udało się połączyć. Niektóre sieci blokują bezpośrednie połączenia; spróbujcie z oboma urządzeniami w tej samej sieci Wi-Fi.",
+  "lobby.copy": "Kopiuj",
+  "lobby.copied": "Skopiowano!",
+  "lobby.home": "Wróć do gier",
 };

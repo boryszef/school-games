@@ -10,6 +10,7 @@ export function renderGameScreen(root, app, route) {
 
   const playerId = app.data.currentPlayerId;
   if (playerId === null) {
+    app.returnHash = location.hash;
     app.navigate("#/players");
     return () => {};
   }
@@ -30,5 +31,6 @@ export function renderGameScreen(root, app, route) {
       ),
     bestTimeMs: () => bestTime(app.data, playerId, game.id),
     exit: () => app.navigate("#/"),
+    arg: route.name === "game" ? route.arg : null,
   });
 }

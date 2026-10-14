@@ -8,6 +8,7 @@
  * @property {(result: RunResult) => void} recordRun
  * @property {() => number | null} bestTimeMs Player's best time before the current run.
  * @property {() => void} exit Leaves the game and returns home.
+ * @property {string | null} arg The rest of the route after `#/game/<id>/`, if any.
  */
 /**
  * @typedef {object} GameDefinition

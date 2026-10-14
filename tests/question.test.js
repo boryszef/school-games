@@ -1,4 +1,4 @@
-import { beforeEach, mock, test } from "node:test";
+import { afterEach, beforeEach, mock, test } from "node:test";
 import assert from "node:assert/strict";
 import { installDom } from "./helpers/dom.js";
 import { translate } from "../src/core/i18n.js";
@@ -18,6 +18,9 @@ beforeEach(() => {
   dom = installDom();
   clockMs = 0;
   mock.timers.enable({ apis: ["setTimeout", "setInterval"] });
+});
+afterEach(() => {
+  mock.timers.reset();
 });
 
 /** Advances both the card's clock and the mocked timers. */
