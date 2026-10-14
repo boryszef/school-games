@@ -63,6 +63,7 @@ export function createChallengeDialog(t, onSubmit) {
       question.textContent = t("robotMaze.question", { a: pos.row, b: pos.col });
       input.value = "";
       feedback.textContent = "";
+      form.classList.remove("shake"); // otherwise the previous robot's shake replays on reopening
       element.hidden = false;
       focusInput();
     },
