@@ -1,0 +1,34 @@
+export const messages = {
+  pl: {
+    "robotMaze.title": "Labirynt robotów",
+    "robotMaze.goal":
+      "Dojdź do flagi 🏁. Robot przepuści cię, gdy pomnożysz numer wiersza przez numer kolumny.",
+    "robotMaze.time": "Czas",
+    "robotMaze.question": "{a} × {b} = ?",
+    "robotMaze.answer": "Wynik",
+    "robotMaze.tryAgain": "Spróbuj jeszcze raz! +5 s",
+    "robotMaze.finished": "Brawo, udało się!",
+    "robotMaze.yourTime": "Twój czas: {time}",
+    "robotMaze.mistakes": "Pomyłki: {count}",
+    "robotMaze.newBest": "Nowy rekord! 🏆",
+    "robotMaze.best": "Twój rekord: {time}",
+    "robotMaze.playAgain": "Zagraj jeszcze raz",
+    "robotMaze.home": "Wybierz inną grę",
+  },
+  en: {
+    "robotMaze.title": "Robot Maze",
+    "robotMaze.goal":
+      "Reach the flag 🏁. A robot lets you pass when you multiply the row number by the column number.",
+    "robotMaze.time": "Time",
+    "robotMaze.question": "{a} × {b} = ?",
+    "robotMaze.answer": "Answer",
+    "robotMaze.tryAgain": "Try again! +5 s",
+    "robotMaze.finished": "Well done, you made it!",
+    "robotMaze.yourTime": "Your time: {time}",
+    "robotMaze.mistakes": "Mistakes: {count}",
+    "robotMaze.newBest": "New record! 🏆",
+    "robotMaze.best": "Your record: {time}",
+    "robotMaze.playAgain": "Play again",
+    "robotMaze.home": "Choose another game",
+  },
+};
