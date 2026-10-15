@@ -14,7 +14,9 @@
     "format:check": "prettier --check .",
     "typecheck": "tsc --noEmit -p jsconfig.json",
     "deadcode": "knip",
-    "serve": "python3 -m http.server 8000"
+    "serve": "python3 -m http.server 8000",
+    "worker:dev": "wrangler dev --config worker/wrangler.jsonc",
+    "worker:deploy": "wrangler d1 migrations apply school-games --remote --config worker/wrangler.jsonc && wrangler deploy --config worker/wrangler.jsonc"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
@@ -25,6 +27,7 @@
     "jsdom": "29.1.1",
     "knip": "6.38.0",
     "prettier": "3.9.9",
-    "typescript": "5.9.3"
+    "typescript": "5.9.3",
+    "wrangler": "4.149.0"
   }
 }

@@ -2,11 +2,11 @@
 
 ## Summary
 
-Education games is a static web app (HTML, CSS and ES-module JavaScript with no runtime dependencies or backend) that hosts learning games for young kids. The first game, **Robot Maze**, practises the 10×10 multiplication table. The child walks through a 10×10 maze. Ten robots block the path to the exit, and each robot is disabled by typing the product of its cell's coordinates. A wrong answer costs 5 seconds. A faster time is a better result. Player profiles, results and statistics are stored only in the browser. The UI is in Polish and English. The platform has a plug-in contract so more games can be added later. Two-player games connect two browsers directly over WebRTC, with no server: the players exchange an invitation and an answer as links or QR codes. The second game, **Tug of War**, is such a duel: both players get the same multiplication, and the faster correct answer tugs the rope. Sources: [plan.md](plan.md), [plan-tug-of-war.md](plan-tug-of-war.md).
+Education games is a static web app (HTML, CSS and ES-module JavaScript with no runtime dependencies or backend) that hosts learning games for young kids. The first game, **Robot Maze**, practises the 10×10 multiplication table. The child walks through a 10×10 maze. Ten robots block the path to the exit, and each robot is disabled by typing the product of its cell's coordinates. A wrong answer costs 5 seconds. A faster time is a better result. Player profiles, results and statistics are stored only in the browser. The UI is in Polish and English. The platform has a plug-in contract so more games can be added later. Two-player games connect two browsers directly over WebRTC. A small Cloudflare Worker only passes the connection details between them through a short room code (shown as a link and a QR code) and hands out TURN relay credentials. The second game, **Tug of War**, is such a duel: both players get the same multiplication, and the faster correct answer tugs the rope. Sources: [plan.md](plan.md), [plan-tug-of-war.md](plan-tug-of-war.md), [plan-pvp-rooms.md](plan-pvp-rooms.md).
 
 ## R1 – Platform
 
-- R1.1 The app is static files only: no backend, and nothing is fetched from a CDN or installed from npm at runtime. Third-party code is allowed only as a vendored, licence-compatible file under `src/vendor/` with its source and licence noted in a header. It must be served over HTTP(S) because it uses ES modules.
+- R1.1 The app is static files only, with one exception: the small Cloudflare Worker in `worker/` (free tier, R6), which accepts requests only from the app's own origins. Nothing is fetched from a CDN or installed from npm at runtime. Third-party code is allowed only as a vendored, licence-compatible file under `src/vendor/` with its source and licence noted in a header. It must be served over HTTP(S) because it uses ES modules.
 - R1.2 Hash routing: `#/` home (list of games), `#/players` (profiles), `#/game/<id>` (a game) and `#/game/<id>/<arg>`, where `<arg>` is the rest of the hash, passed to the game.
 - R1.3 A game is a module that registers a `GameDefinition` (`id`, `titleKey`, `icon`, `messages: {pl, en}`, `mount(root, ctx) → unmount`). The `GameContext` passed to `mount` provides `player`, `t`, `recordRun(result)`, `exit()` and `arg` (the route's `<arg>`, or `null`). Adding a game means adding a folder under `src/games/` and one registration line.
 - R1.4 The on-screen number pad and direction pad are reusable core UI components.
@@ -41,19 +41,31 @@ Education games is a static web app (HTML, CSS and ES-module JavaScript with no 
 
 ## R5 – Quality
 
-- R5.1 The pure logic (maze, path, robots, game state, profiles, storage, i18n parity, SDP codes, Tug of War rules and message validation) is unit-tested with `node --test`.
+- R5.1 The pure logic (maze, path, robots, game state, profiles, storage, i18n parity, room codes, the Worker's room logic, Tug of War rules and message validation) is unit-tested with `node --test`.
 - R5.2 Pre-commit hooks run Prettier, ESLint, `tsc --checkJs` (JSDoc types), knip (dead code) and the tests.
 - R5.3 The Node version is managed through nvm (`.nvmrc`).
 
 ## R6 – Peer-to-peer (two-player games)
 
-- R6.1 Two browsers connect directly over a WebRTC data channel. No server of ours is involved. The only outside service is a public STUN server (`stun:stun.l.google.com:19302`). There is no TURN relay, so some strict networks cannot connect, and the UI then shows a "could not connect" message. After the host receives the answer, it waits up to 60 s for the connection and shows a countdown meanwhile. If the time runs out, it shows a timeout message with "Try again" (a new invitation) and "Back to games". The guest waits with no time limit.
-- R6.2 The host creates an offer and shows it as an invitation link `#/game/<id>/join/<code>` with a QR code and a copy button. The UI tells the host to keep the tab open.
-- R6.3 The guest opens the invitation and gets an answer link `#/game/<id>/answer/<code>` with a QR code and a copy button.
-- R6.4 The answer reaches the host either by opening the answer link in the host's browser (a new tab forwards it to the waiting game tab through BroadcastChannel and says "go back to the game tab", or that no game is waiting) or by pasting the link or code into a box in the host tab.
-- R6.5 ICE candidates are gathered in full before the code is made (non-trickle, capped at 3 s). The code contains only what the connection needs (ICE credentials, DTLS fingerprint, setup role, candidates) and a session id echoed by the answer, so that the link is short enough for a readable QR code. A malformed code is reported as an invalid code.
-- R6.6 Messages between the peers are JSON and are validated on receipt. An invalid message is an error.
-- R6.7 When the connection drops, both players see "connection lost" and can go home.
+- R6.1 Two browsers connect directly over a WebRTC data channel. The Worker only passes the offer and answer between them (R6.2–R6.4) and hands out ICE servers from `GET /turn`: Cloudflare STUN and TURN with credentials valid for 1 hour. When a direct path is blocked, game messages go through the TURN relay.
+- R6.2 The host posts its offer and gets a room code: 6 characters from `23456789ABCDEFGHJKMNPQRSTUVWXYZ`. The host's screen shows the code in large letters, a QR code and the link `#/game/<id>/join/<code>` with a copy button. It also shows a "Have a code?" box that takes a code or a whole link (ignoring case and spaces) and joins that room as the guest.
+- R6.3 The guest fetches the offer, posts the answer and then waits with no time limit. The host asks for the answer every 1.5 s. Once it has the answer, it waits up to 60 s for the connection and shows a countdown meanwhile.
+- R6.4 Rooms on the Worker:
+  - A room expires 10 minutes after creation.
+  - A room is deleted as soon as the host has collected the answer, since the offer and answer contain IP addresses.
+  - A room accepts one answer only.
+  - The offer and answer are SDP texts of at most 8192 characters.
+  - Expired rooms are deleted whenever a new room is created.
+  - Creating rooms and getting TURN credentials are rate-limited per IP with Cloudflare's rate limiting. No IP addresses are stored.
+- R6.5 What the players see when something goes wrong:
+  - The host's room expires before an answer arrives: "This invitation has expired", with "New invitation" and "Back to games".
+  - The guest opens an unknown, expired or already answered room: "This invitation is no longer valid", with "Back to games".
+  - The Worker can't be reached or returns an unexpected error: "Can't reach the game server", with "Try again" and "Back to games".
+  - The 60 s connection time runs out: the timeout message, with "Try again with a new invitation" and "Back to games".
+  - The browser gives up on the connection: "Could not connect", with "Back to games".
+- R6.6 ICE candidates are gathered in full before the offer or answer is sent (non-trickle, capped at 3 s).
+- R6.7 Messages between the peers are JSON and are validated on receipt. An invalid message is an error.
+- R6.8 When the connection drops, both players see "connection lost" and can go home.
 
 ## R7 – Tug of War rules
 

@@ -2,7 +2,7 @@
 
 ## Summary
 
-Small learning games for young kids. The app runs entirely in the browser: it is static HTML, CSS and JavaScript with no backend and nothing fetched or installed at runtime. Two-player games connect the players' browsers directly to each other. Progress is kept in the browser's `localStorage`. The interface is in Polish and English.
+Small learning games for young kids. The app runs in the browser: it is static HTML, CSS and JavaScript with nothing fetched or installed at runtime. Two-player games connect the players' browsers directly to each other; a small Cloudflare Worker on the free tier only helps them find each other. Progress is kept in the browser's `localStorage`. The interface is in Polish and English.
 
 ▶ **Play: https://boryszef.github.io/school-games/**
 
@@ -20,15 +20,13 @@ Controls: the arrow keys or WASD, the on-screen arrows, or tapping the next cell
 
 A multiplication duel for two players on two devices. Both players get the same question, from 2 × 2 to 10 × 10. The faster correct answer pulls the rope one step towards that player, and the first to pull it 5 steps to their side wins. A wrong answer freezes the player for 2 seconds.
 
-To play, one player opens the game and shows the invitation QR code (or sends the link). The other player scans it with the camera app and gets an answer code. The first player scans that one with their camera, or pastes the answer link into the game tab, and the match starts.
+To play, one player opens the game and gets a 6-character game code, shown in large letters, as a QR code and as a link. The other player scans the QR code with the camera app, opens the link, or types the code under "Have a code from a friend?", and the match starts.
 
 #### How the connection works
 
-There is no game server. The browsers talk to each other over a WebRTC data channel. To set it up, each side has to learn the other's network address and encryption fingerprint, so an invitation goes one way and an answer comes back (`src/core/net/`). Each code holds only what the connection needs, packed into about 130 characters. A public STUN server (Google's) tells each browser its public address. Game traffic never passes through it.
+The browsers talk to each other over a WebRTC data channel (`src/core/net/`). To set it up, each side has to learn the other's network addresses and encryption fingerprint. The host's description (the "offer") and the guest's reply (the "answer") are passed through a small Cloudflare Worker (`worker/`) under the game code. The Worker deletes the room as soon as the host has the answer, or after 10 minutes at most.
 
-When the answer link is opened on the inviting device, the new tab passes the answer to the waiting game tab through `BroadcastChannel`. The invitation works only while that tab stays open.
-
-Players on the same Wi-Fi almost always connect. Some strict networks (some schools, offices and mobile carriers) block direct connections, and without a relay server those players can't connect; the game then says so.
+The Worker also hands out short-lived TURN credentials from Cloudflare. When two networks block a direct connection (some schools, offices and mobile carriers do), the game traffic goes through Cloudflare's TURN relay instead. Otherwise it never passes through any server.
 
 ## Development
 
@@ -38,7 +36,10 @@ Requires [nvm](https://github.com/nvm-sh/nvm). The Node version is pinned in `.n
 nvm use
 npm ci
 npm run serve        # http://localhost:8000
+npm run worker:dev   # the Worker with a local database, http://localhost:8787
 ```
+
+On `localhost` the app uses the local Worker. Before the first `worker:dev`, create the local database with `npx wrangler d1 migrations apply school-games --local --config worker/wrangler.jsonc`. Two-player games need TURN credentials even locally: put `TURN_KEY_API_TOKEN=...` in `worker/.dev.vars` (git-ignored).
 
 ES modules need to be served over HTTP, so opening `index.html` directly from disk won't work.
 
@@ -58,7 +59,9 @@ Pre-commit hooks run all of the above. Install them once with `uv tool install p
 index.html, css/       page shell and shared styles
 fonts/                 emoji fallback font (see below)
 src/core/              app, routing, storage, players, i18n, shared UI (number pad, d-pad, QR code, two-player lobby)
-src/core/net/          peer-to-peer connection: connection codes, WebRTC, answer hand-over between tabs
+src/core/net/          peer-to-peer connection: room codes, WebRTC
+src/core/online/       calls to the Worker
+worker/                Cloudflare Worker: rooms for two-player games, TURN credentials
 src/vendor/            vendored third-party code (QR code encoder)
 src/screens/           home, players, game host
 src/games/<id>/        one folder per game
@@ -81,7 +84,17 @@ A two-player game calls `openLobby(root, {gameId, arg: ctx.arg, t})` from `src/c
 
 ## Deployment
 
-Every push to `master` runs the checks and publishes the app to GitHub Pages (`.github/workflows/pages.yml`). Only `index.html`, `css/`, `src/` and `fonts/` are published.
+Every push to `master` runs the checks, deploys the Worker (applying new D1 migrations first) and then publishes the app to GitHub Pages (`.github/workflows/pages.yml`). Only `index.html`, `css/`, `src/` and `fonts/` are published to Pages.
+
+### One-time Cloudflare setup
+
+Everything below fits in Cloudflare's free tier, and no payment card is needed.
+
+1. Create a Cloudflare account, then run `npx wrangler login`.
+2. Run `npx wrangler d1 create school-games`, and put the printed `database_id` into `worker/wrangler.jsonc`.
+3. In the dashboard, under Realtime → TURN, create a TURN key. Put its id into `TURN_KEY_ID` in `worker/wrangler.jsonc`, and store its API token with `npx wrangler secret put TURN_KEY_API_TOKEN --config worker/wrangler.jsonc`.
+4. Create an API token with the "Edit Cloudflare Workers" template plus D1 edit rights. Add it and your account id to the GitHub repository secrets as `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`.
+5. After the first deploy, put the Worker's `*.workers.dev` address into `API_URL` in `src/core/online/api.js`.
 
 ## License
 

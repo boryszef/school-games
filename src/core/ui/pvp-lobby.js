@@ -1,7 +1,13 @@
-import { log } from "../log.js";
-import { deliverAnswer, listenForAnswer } from "../net/answer-relay.js";
-import { CONNECT_TIMEOUT_MS, ConnectionFailedError, hostPeer, joinPeer } from "../net/peer.js";
-import { InvalidCodeError } from "../net/sdp-code.js";
+import { ApiError, ServerUnreachableError } from "../online/api.js";
+import {
+  CONNECT_TIMEOUT_MS,
+  ConnectionFailedError,
+  RoomExpiredError,
+  RoomGoneError,
+  hostPeer,
+  joinPeer,
+} from "../net/peer.js";
+import { InvalidRoomCodeError, parseRoomCode } from "../net/room-code.js";
 import { h } from "./dom.js";
 import { createQrCode } from "./qr.js";
 
@@ -11,234 +17,223 @@ import { createQrCode } from "./qr.js";
 /**
  * @typedef {object} LobbyOptions
  * @property {string} gameId
- * @property {string | null} arg The game route's argument: `join/<offer>`, `answer/<answer>` or none.
+ * @property {string | null} arg The game route's argument: `join/<code>` or none.
  * @property {Translate} t
+ */
+/**
+ * @typedef {object} View
+ * @property {(...children: (Node | string)[]) => void} show
+ * @property {Translate} t
+ * @property {(key: string) => void} problem A message with "Back to games" only.
+ * @property {(key: string, buttonKey: string, again: () => void) => void} retry A message with a
+ *   button that runs `again`, and "Back to games".
+ */
+/**
+ * One connection try; `again` starts a new one. Returns a function that cancels the try.
+ * @typedef {(onConnected: (connection: Connection) => void, again: () => void) => () => void}
+ *   Attempt
  */
 
 /**
- * Connects two players for a two-player game. Without an argument this tab invites (host);
- * with `join/<offer>` it answers an invitation (guest); with `answer/<answer>` it only hands the
- * answer over to the host's waiting tab.
+ * Connects two players for a two-player game. Without an argument this tab opens a room (host);
+ * with `join/<code>` it joins that room (guest).
  * @param {HTMLElement} root
  * @param {LobbyOptions} options
- * @returns {{connected: Promise<Connection>, close: () => void}} `connected` never settles in an
- *   answer tab or after a failure, which the lobby reports itself.
+ * @returns {{connected: Promise<Connection>, close: () => void}} `connected` never settles after
+ *   a failure, which the lobby reports itself.
  */
 export function openLobby(root, { gameId, arg, t }) {
-  const [mode, code] = arg === null ? ["host", ""] : _splitArg(arg);
-  const view = h("div", { class: "lobby" });
-  root.replaceChildren(view);
-  const show = (/** @type {(Node | string)[]} */ ...children) => view.replaceChildren(...children);
-  /** @param {string} key */
-  const problem = (key) =>
-    show(
-      h("p", { class: "notice" }, t(key)),
-      h("a", { href: "#/", class: "button" }, t("lobby.home")),
-    );
-  const never = new Promise(() => {});
+  const element = h("div", { class: "lobby" });
+  root.replaceChildren(element);
+  const view = _view(element, t);
 
-  if (mode === "host") return _host(show, problem, { gameId, t });
-  if (mode === "join") {
-    try {
-      return _guest(show, problem, { gameId, t, offerCode: code });
-    } catch (error) {
-      if (!(error instanceof InvalidCodeError)) throw error;
-      problem("lobby.invalidInvite");
-      return { connected: never, close: () => {} };
-    }
+  if (arg === null)
+    return _attempts((onConnected, again) => _host(view, gameId, onConnected, again));
+  try {
+    if (!arg.startsWith("join/")) throw new InvalidRoomCodeError(arg);
+    const code = parseRoomCode(arg.slice("join/".length));
+    return _attempts((onConnected, again) => _guest(view, code, onConnected, again));
+  } catch (error) {
+    if (!(error instanceof InvalidRoomCodeError)) throw error;
+    view.problem("lobby.invalidInvite");
+    return { connected: new Promise(() => {}), close: () => {} };
   }
-  if (mode === "answer") _answerTab(show, problem, { t, answerCode: code });
-  else problem("lobby.invalidInvite");
-  return { connected: never, close: () => {} };
-}
-
-/** @param {string} arg */
-function _splitArg(arg) {
-  const slash = arg.indexOf("/");
-  return slash === -1 ? [arg, ""] : [arg.slice(0, slash), arg.slice(slash + 1)];
 }
 
 /**
- * @typedef {(...children: (Node | string)[]) => void} Show
- * @typedef {(key: string) => void} Problem
+ * @param {HTMLElement} element
+ * @param {Translate} t
+ * @returns {View}
  */
+function _view(element, t) {
+  const show = (/** @type {(Node | string)[]} */ ...children) =>
+    element.replaceChildren(...children);
+  const home = () => h("a", { href: "#/", class: "button secondary" }, t("lobby.home"));
+  /**
+   * @param {string} key
+   * @param {HTMLElement[]} buttons
+   */
+  const message = (key, buttons) =>
+    show(
+      h("p", { class: "notice" }, t(key, { seconds: CONNECT_TIMEOUT_MS / 1000 })),
+      h("div", { class: "lobby-actions" }, ...buttons, home()),
+    );
+  return {
+    show,
+    t,
+    problem: (key) => message(key, []),
+    retry(key, buttonKey, again) {
+      const button = h("button", { type: "button", class: "button" }, t(buttonKey));
+      button.addEventListener("click", again);
+      message(key, [button]);
+    },
+  };
+}
 
 /**
- * Invites; after a timeout the player can retry with a fresh invitation.
- * @param {Show} show
- * @param {Problem} problem
- * @param {{gameId: string, t: Translate}} options
+ * Runs tries until one connects; a retry button cancels the current try and starts a new one.
+ * @param {Attempt} attempt
  */
-function _host(show, problem, { gameId, t }) {
-  let closeAttempt = () => {};
+function _attempts(attempt) {
+  let cancel = () => {};
   /** @type {Promise<Connection>} */
   const connected = new Promise((resolve) => {
-    const attempt = () => {
-      closeAttempt = _hostAttempt(show, problem, {
-        gameId,
-        t,
-        onConnected: resolve,
-        onTimeout: timedOut,
-      });
+    const again = () => {
+      cancel();
+      cancel = attempt(resolve, again);
     };
-    const timedOut = () => {
-      const retry = h("button", { type: "button", class: "button" }, t("lobby.tryAgain"));
-      retry.addEventListener("click", () => {
-        closeAttempt();
-        attempt();
-      });
-      show(
-        h("p", { class: "notice" }, t("lobby.timedOut", { seconds: CONNECT_TIMEOUT_MS / 1000 })),
-        h(
-          "div",
-          { class: "lobby-actions" },
-          retry,
-          h("a", { href: "#/", class: "button secondary" }, t("lobby.home")),
-        ),
-      );
-    };
-    attempt();
+    again();
   });
-  return { connected, close: () => closeAttempt() };
+  return { connected, close: () => cancel() };
 }
 
 /**
- * @typedef {object} HostAttemptOptions
- * @property {string} gameId
- * @property {Translate} t
- * @property {(connection: Connection) => void} onConnected
- * @property {() => void} onTimeout
+ * Opens a room, shows its code, link and QR code, and counts down while connecting.
+ * @param {View} view
+ * @param {string} gameId
+ * @param {(connection: Connection) => void} onConnected
+ * @param {() => void} again
  */
-
-/**
- * One invitation: shows it, takes the answer from the relay or the paste box, and counts down
- * while connecting.
- * @param {Show} show
- * @param {Problem} problem
- * @param {HostAttemptOptions} options
- * @returns {() => void} Closes the attempt.
- */
-function _hostAttempt(show, problem, { gameId, t, onConnected, onTimeout }) {
-  const peer = hostPeer();
-  /** The relay and the paste box can both bring an answer; only the first one counts. */
-  let accepted = false;
+function _host(view, gameId, onConnected, again) {
+  const { show, t } = view;
   /** @type {ReturnType<typeof setInterval> | undefined} */
   let countdown;
-  const pasted = h("input", {
-    class: "lobby-paste",
-    autocomplete: "off",
-    "aria-label": t("lobby.pasteLabel"),
-    placeholder: t("lobby.pastePlaceholder"),
-  });
-  const pasteError = h("p", { class: "lobby-error", "aria-live": "polite" });
-  const form = h(
-    "form",
-    { class: "lobby-paste-form" },
-    pasted,
-    h("button", { type: "submit" }, t("lobby.connect")),
-  );
+  let cancelled = false;
   show(h("h2", {}, t("lobby.inviteTitle")), h("p", {}, t("lobby.preparing")));
 
-  /** @param {string} input A pasted answer link or bare code. */
-  const accept = async (input) => {
-    if (accepted) return;
-    const answerCode = input.trim().replace(/^.*\/answer\//, "");
-    try {
-      const connecting = peer.accept(answerCode);
-      accepted = true;
-      stopListening();
-      showCountdown();
-      onConnected({ role: "host", channel: await connecting });
-    } catch (error) {
-      if (error instanceof InvalidCodeError) pasteError.textContent = t("lobby.invalidAnswer");
-      else if (!(error instanceof ConnectionFailedError)) throw error;
-      else if (error.reason === "timeout") onTimeout();
-      else problem("lobby.failed");
-    } finally {
-      clearInterval(countdown);
-    }
-  };
-  form.addEventListener("submit", (event) => {
-    event.preventDefault();
-    accept(pasted.value);
-  });
-  const stopListening = listenForAnswer(peer.sessionId, accept);
-
-  function showCountdown() {
-    let seconds = CONNECT_TIMEOUT_MS / 1000;
-    const status = h("p", { "aria-live": "polite" });
-    const render = () => (status.textContent = t("lobby.connecting", { seconds }));
-    render();
-    show(status);
-    countdown = setInterval(() => {
-      seconds = Math.max(0, seconds - 1);
+  const peer = hostPeer({
+    onCode: (code) =>
+      show(
+        h("h2", {}, t("lobby.inviteTitle")),
+        h("p", {}, t("lobby.inviteHelp")),
+        h("p", { class: "lobby-code", "aria-label": t("lobby.codeLabel") }, code),
+        ..._shareable(_gameLink(gameId, `join/${code}`), t),
+        ..._codeForm(gameId, t),
+      ),
+    onAnswer: () => {
+      let seconds = CONNECT_TIMEOUT_MS / 1000;
+      const status = h("p", { "aria-live": "polite" });
+      const render = () => (status.textContent = t("lobby.connecting", { seconds }));
       render();
-    }, 1000);
-  }
-
-  peer.offerCode.then((offerCode) => {
-    show(
-      h("h2", {}, t("lobby.inviteTitle")),
-      h("p", {}, t("lobby.inviteHelp")),
-      ..._shareable(_gameLink(gameId, `join/${offerCode}`), t),
-      h("p", { class: "lobby-keep-open" }, t("lobby.keepOpen")),
-      h("h3", {}, t("lobby.answerTitle")),
-      h("p", {}, t("lobby.answerHelp")),
-      form,
-      pasteError,
-    );
+      show(status);
+      countdown = setInterval(() => {
+        seconds = Math.max(0, seconds - 1);
+        render();
+      }, 1000);
+    },
   });
+  peer.channel.then(
+    (channel) => {
+      clearInterval(countdown);
+      onConnected({ role: "host", channel });
+    },
+    (error) => {
+      clearInterval(countdown);
+      if (cancelled) return;
+      if (error instanceof RoomExpiredError)
+        view.retry("lobby.expired", "lobby.newInvitation", again);
+      else if (error instanceof ConnectionFailedError && error.reason === "timeout") {
+        view.retry("lobby.timedOut", "lobby.tryAgain", again);
+      } else _commonFailure(view, error, again);
+    },
+  );
 
   return () => {
+    cancelled = true;
     clearInterval(countdown);
-    stopListening();
     peer.close();
   };
 }
 
 /**
- * @param {Show} show
- * @param {Problem} problem
- * @param {{gameId: string, t: Translate, offerCode: string}} options
- * @throws {InvalidCodeError}
+ * Joins a room and waits, with no time limit, for the connection.
+ * @param {View} view
+ * @param {string} code
+ * @param {(connection: Connection) => void} onConnected
+ * @param {() => void} again
  */
-function _guest(show, problem, { gameId, t, offerCode }) {
-  const peer = joinPeer(offerCode);
-  show(h("h2", {}, t("lobby.joinTitle")), h("p", {}, t("lobby.preparing")));
-  peer.answerCode.then((answerCode) =>
-    show(
-      h("h2", {}, t("lobby.joinTitle")),
-      h("p", {}, t("lobby.joinHelp")),
-      ..._shareable(_gameLink(gameId, `answer/${answerCode}`), t),
-      h("p", { class: "lobby-waiting" }, t("lobby.waitingForHost")),
-    ),
-  );
-  const connected = peer.channel.then(
-    (channel) => /** @type {Connection} */ ({ role: "guest", channel }),
+function _guest(view, code, onConnected, again) {
+  const { show, t } = view;
+  let cancelled = false;
+  show(h("h2", {}, t("lobby.joinTitle")), h("p", { "aria-live": "polite" }, t("lobby.joining")));
+  const peer = joinPeer(code);
+  peer.channel.then(
+    (channel) => onConnected({ role: "guest", channel }),
     (error) => {
-      if (!(error instanceof ConnectionFailedError)) throw error;
-      problem("lobby.failed");
-      return new Promise(() => {});
+      if (cancelled) return;
+      if (error instanceof RoomGoneError) view.problem("lobby.invalidInvite");
+      else _commonFailure(view, error, again);
     },
   );
-  return { connected, close: peer.close };
+  return () => {
+    cancelled = true;
+    peer.close();
+  };
 }
 
 /**
- * @param {Show} show
- * @param {Problem} problem
- * @param {{t: Translate, answerCode: string}} options
+ * Failures both sides can meet: the Worker can't be reached, or WebRTC gives up.
+ * @param {View} view
+ * @param {unknown} error
+ * @param {() => void} again
  */
-async function _answerTab(show, problem, { t, answerCode }) {
-  try {
-    const delivered = await deliverAnswer(answerCode);
-    log.debug("answer delivered to a waiting tab", delivered);
-    if (delivered) show(h("p", { class: "notice" }, t("lobby.answerDelivered")));
-    else problem("lobby.noWaitingGame");
-  } catch (error) {
-    if (!(error instanceof InvalidCodeError)) throw error;
-    problem("lobby.invalidAnswer");
-  }
+function _commonFailure(view, error, again) {
+  if (error instanceof ServerUnreachableError || error instanceof ApiError) {
+    view.retry("lobby.serverUnreachable", "lobby.retry", again);
+  } else if (error instanceof ConnectionFailedError) view.problem("lobby.failed");
+  else throw error;
+}
+
+/**
+ * "Have a code?": joins a friend's room instead of waiting in this one.
+ * @param {string} gameId
+ * @param {Translate} t
+ */
+function _codeForm(gameId, t) {
+  const input = h("input", {
+    class: "lobby-code-input",
+    autocomplete: "off",
+    autocapitalize: "characters",
+    "aria-label": t("lobby.codeLabel"),
+    placeholder: "K7P2QX",
+  });
+  const error = h("p", { class: "lobby-error", "aria-live": "polite" });
+  const form = h(
+    "form",
+    { class: "lobby-code-form" },
+    input,
+    h("button", { type: "submit" }, t("lobby.join")),
+  );
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    try {
+      location.hash = `#/game/${gameId}/join/${parseRoomCode(input.value)}`;
+    } catch (caught) {
+      if (!(caught instanceof InvalidRoomCodeError)) throw caught;
+      error.textContent = t("lobby.invalidCode");
+    }
+  });
+  return [h("h3", {}, t("lobby.haveCode")), form, error];
 }
 
 /**

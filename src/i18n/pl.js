@@ -24,30 +24,27 @@ export default {
   "dpad.right": "W prawo",
   "lobby.inviteTitle": "Zaproś kolegę lub koleżankę",
   "lobby.preparing": "Przygotowuję…",
-  "lobby.inviteHelp": "Druga osoba skanuje ten kod aparatem albo wysyłasz jej link.",
-  "lobby.keepOpen": "Nie zamykaj tej karty, dopóki nie połączycie się.",
-  "lobby.answerTitle": "Odpowiedź drugiej osoby",
-  "lobby.answerHelp":
-    "Druga osoba też dostanie kod. Zeskanuj go aparatem na tym urządzeniu albo wklej tutaj jej link:",
-  "lobby.pasteLabel": "Link od drugiej osoby",
-  "lobby.pastePlaceholder": "Wklej link",
-  "lobby.connect": "Połącz",
+  "lobby.inviteHelp":
+    "Druga osoba skanuje ten kod aparatem, otwiera link, który jej wyślesz, albo wpisuje kod gry.",
+  "lobby.codeLabel": "Kod gry",
+  "lobby.haveCode": "Masz kod od kogoś innego?",
+  "lobby.join": "Dołącz",
+  "lobby.invalidCode": "To nie jest kod gry. Kod ma 6 liter i cyfr.",
   "lobby.connecting": "Łączę… {seconds} s",
   "lobby.joinTitle": "Dołącz do gry",
-  "lobby.joinHelp":
-    "Pokaż ten kod osobie, która cię zaprosiła, żeby go zeskanowała, albo wyślij jej link.",
-  "lobby.waitingForHost": "Czekam na drugą osobę…",
-  "lobby.answerDelivered": "Gotowe! Wróć do karty z grą.",
-  "lobby.noWaitingGame":
-    "Żadna gra w tej przeglądarce nie czeka na tę odpowiedź. Wklej link w karcie z grą u osoby, która wysłała zaproszenie.",
-  "lobby.invalidInvite": "To zaproszenie jest nieprawidłowe. Poproś o nowe.",
-  "lobby.invalidAnswer": "Ta odpowiedź nie pasuje do tego zaproszenia.",
+  "lobby.joining": "Łączę z drugą osobą…",
+  "lobby.invalidInvite": "To zaproszenie jest już nieważne. Poproś o nowe.",
+  "lobby.expired": "To zaproszenie wygasło.",
+  "lobby.newInvitation": "Nowe zaproszenie",
+  "lobby.serverUnreachable":
+    "Nie mogę połączyć się z serwerem gry. Sprawdź połączenie z internetem.",
+  "lobby.retry": "Spróbuj ponownie",
   "lobby.failed":
-    "Nie udało się połączyć. Niektóre sieci blokują bezpośrednie połączenia; spróbujcie z oboma urządzeniami w tej samej sieci Wi-Fi.",
+    "Nie udało się połączyć. Spróbujcie ponownie albo połączcie oba urządzenia z tą samą siecią Wi-Fi.",
   "lobby.copy": "Kopiuj",
   "lobby.copied": "Skopiowano!",
   "lobby.home": "Wróć do gier",
   "lobby.timedOut":
-    "Nie udało się połączyć w ciągu {seconds} sekund. Wasze sieci mogą blokować bezpośrednie połączenia. Spróbujcie jeszcze raz z oboma urządzeniami w tej samej sieci Wi-Fi.",
+    "Nie udało się połączyć w ciągu {seconds} sekund. Spróbujcie ponownie albo połączcie oba urządzenia z tą samą siecią Wi-Fi.",
   "lobby.tryAgain": "Spróbuj ponownie z nowym zaproszeniem",
 };
