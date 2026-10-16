@@ -3,8 +3,7 @@ import { callApi } from "../online/api.js";
 
 /**
  * Direct browser-to-browser connection over a WebRTC data channel. The Worker only passes the
- * offer and answer between the players (through a room code) and hands out TURN servers, which
- * relay the traffic when a direct path is blocked.
+ * offer and answer between the players (through a room code) and names the STUN server.
  */
 
 /**
@@ -45,7 +44,7 @@ export class RoomGoneError extends Error {
   }
 }
 
-/** Gathering can hang on an unreachable STUN/TURN server; after this the found candidates go. */
+/** Gathering can hang on an unreachable STUN server; after this the found candidates go. */
 const GATHERING_CAP_MS = 3000;
 /** How long the host waits for the channel to open after receiving the answer. */
 export const CONNECT_TIMEOUT_MS = 60000;
@@ -112,7 +111,7 @@ function _session() {
   let connection;
   return {
     async open() {
-      const { data } = await callApi("GET", "/turn", { expect: [200] });
+      const { data } = await callApi("GET", "/ice-servers", { expect: [200] });
       log.debug("ICE servers", data.iceServers.length);
       connection = new RTCPeerConnection({ iceServers: data.iceServers });
       if (closed) connection.close();

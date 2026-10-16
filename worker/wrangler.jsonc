@@ -1,4 +1,4 @@
-// The School Games Worker: rooms for two-player games and TURN credentials (docs/plan-pvp-rooms.md).
+// The School Games Worker: rooms for two-player games (docs/plan-pvp-rooms.md).
 {
   "$schema": "../node_modules/wrangler/config-schema.json",
   "name": "school-games",
@@ -9,18 +9,16 @@
     {
       "binding": "DB",
       "database_name": "school-games",
-      "database_id": "REPLACE_WITH_DATABASE_ID",
+      "database_id": "c29dc208-3877-4347-a847-a3abeca0c34a",
       "migrations_dir": "migrations",
     },
   ],
-  // Per IP: 20 new rooms or TURN credentials a minute.
+  // Per IP: 20 new rooms a minute.
   "ratelimits": [
     {
-      "name": "SIGNALLING_LIMIT",
+      "name": "ROOMS_LIMIT",
       "namespace_id": "1001",
       "simple": { "limit": 20, "period": 60 },
     },
   ],
-  "vars": { "TURN_KEY_ID": "REPLACE_WITH_TURN_KEY_ID" },
-  // TURN_KEY_API_TOKEN is a secret: npx wrangler secret put TURN_KEY_API_TOKEN
 }

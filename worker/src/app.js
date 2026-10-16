@@ -2,17 +2,17 @@ import { createRooms } from "./rooms.js";
 
 /** @typedef {import("./db.js").Db} Db */
 /** @typedef {import("./rooms.js").Reply} Reply */
-/** @typedef {{urls: string | string[], username?: string, credential?: string}} IceServer */
 /**
  * @typedef {object} AppDeps
  * @property {Db} db
  * @property {() => number} now Milliseconds since the epoch.
  * @property {(size: number) => Uint8Array} randomBytes
- * @property {() => Promise<IceServer[]>} turn Fresh STUN and TURN servers with credentials.
  */
 /** @typedef {(request: Request, params: string[]) => Promise<Reply>} Handler */
 
 const MAX_SDP_LENGTH = 8192;
+/** Free and unlimited. A TURN relay would need a payment card on file, so there is none. */
+const ICE_SERVERS = [{ urls: "stun:stun.cloudflare.com:3478" }];
 
 class BadRequestError extends Error {}
 
@@ -20,7 +20,7 @@ class BadRequestError extends Error {}
  * The Worker's API, independent of the Cloudflare runtime.
  * @param {AppDeps} deps
  */
-export function createApp({ db, now, randomBytes, turn }) {
+export function createApp({ db, now, randomBytes }) {
   const rooms = createRooms({ db, now, randomBytes });
 
   /** @type {[string, RegExp, Handler][]} */
@@ -33,7 +33,7 @@ export function createApp({ db, now, randomBytes, turn }) {
       async (request, [code]) => rooms.answer(code, await _sdpField(request, "answer")),
     ],
     ["GET", /^\/rooms\/([^/]+)\/answer$/, async (_, [code]) => rooms.takeAnswer(code)],
-    ["GET", /^\/turn$/, async () => ({ status: 200, body: { iceServers: await turn() } })],
+    ["GET", /^\/ice-servers$/, async () => ({ status: 200, body: { iceServers: ICE_SERVERS } })],
   ];
 
   return {

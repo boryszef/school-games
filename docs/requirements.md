@@ -2,7 +2,7 @@
 
 ## Summary
 
-Education games is a static web app (HTML, CSS and ES-module JavaScript with no runtime dependencies or backend) that hosts learning games for young kids. The first game, **Robot Maze**, practises the 10×10 multiplication table. The child walks through a 10×10 maze. Ten robots block the path to the exit, and each robot is disabled by typing the product of its cell's coordinates. A wrong answer costs 5 seconds. A faster time is a better result. Player profiles, results and statistics are stored only in the browser. The UI is in Polish and English. The platform has a plug-in contract so more games can be added later. Two-player games connect two browsers directly over WebRTC. A small Cloudflare Worker only passes the connection details between them through a short room code (shown as a link and a QR code) and hands out TURN relay credentials. The second game, **Tug of War**, is such a duel: both players get the same multiplication, and the faster correct answer tugs the rope. Sources: [plan.md](plan.md), [plan-tug-of-war.md](plan-tug-of-war.md), [plan-pvp-rooms.md](plan-pvp-rooms.md).
+Education games is a static web app (HTML, CSS and ES-module JavaScript with no runtime dependencies or backend) that hosts learning games for young kids. The first game, **Robot Maze**, practises the 10×10 multiplication table. The child walks through a 10×10 maze. Ten robots block the path to the exit, and each robot is disabled by typing the product of its cell's coordinates. A wrong answer costs 5 seconds. A faster time is a better result. Player profiles, results and statistics are stored only in the browser. The UI is in Polish and English. The platform has a plug-in contract so more games can be added later. Two-player games connect two browsers directly over WebRTC. A small Cloudflare Worker only passes the connection details between them through a short room code (shown as a link and a QR code). The second game, **Tug of War**, is such a duel: both players get the same multiplication, and the faster correct answer tugs the rope. Sources: [plan.md](plan.md), [plan-tug-of-war.md](plan-tug-of-war.md), [plan-pvp-rooms.md](plan-pvp-rooms.md).
 
 ## R1 – Platform
 
@@ -47,7 +47,7 @@ Education games is a static web app (HTML, CSS and ES-module JavaScript with no 
 
 ## R6 – Peer-to-peer (two-player games)
 
-- R6.1 Two browsers connect directly over a WebRTC data channel. The Worker only passes the offer and answer between them (R6.2–R6.4) and hands out ICE servers from `GET /turn`: Cloudflare STUN and TURN with credentials valid for 1 hour. When a direct path is blocked, game messages go through the TURN relay.
+- R6.1 Two browsers connect directly over a WebRTC data channel. The Worker only passes the offer and answer between them (R6.2–R6.4) and gives the ICE servers from `GET /ice-servers`: Cloudflare's free STUN server. There is no TURN relay, because Cloudflare TURN can only be activated with a payment card. Some strict networks therefore cannot connect, and the UI then shows a "could not connect" message.
 - R6.2 The host posts its offer and gets a room code: 6 characters from `23456789ABCDEFGHJKMNPQRSTUVWXYZ`. The host's screen shows the code in large letters, a QR code and the link `#/game/<id>/join/<code>` with a copy button. It also shows a "Have a code?" box that takes a code or a whole link (ignoring case and spaces) and joins that room as the guest.
 - R6.3 The guest fetches the offer, posts the answer and then waits with no time limit. The host asks for the answer every 1.5 s. Once it has the answer, it waits up to 60 s for the connection and shows a countdown meanwhile.
 - R6.4 Rooms on the Worker:
@@ -56,7 +56,7 @@ Education games is a static web app (HTML, CSS and ES-module JavaScript with no 
   - A room accepts one answer only.
   - The offer and answer are SDP texts of at most 8192 characters.
   - Expired rooms are deleted whenever a new room is created.
-  - Creating rooms and getting TURN credentials are rate-limited per IP with Cloudflare's rate limiting. No IP addresses are stored.
+  - Creating rooms is rate-limited per IP with Cloudflare's rate limiting. No IP addresses are stored.
 - R6.5 What the players see when something goes wrong:
   - The host's room expires before an answer arrives: "This invitation has expired", with "New invitation" and "Back to games".
   - The guest opens an unknown, expired or already answered room: "This invitation is no longer valid", with "Back to games".

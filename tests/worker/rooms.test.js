@@ -15,7 +15,6 @@ function setup() {
     db,
     now: () => clock,
     randomBytes: (size) => crypto.getRandomValues(new Uint8Array(size)),
-    turn: async () => [],
   });
   /**
    * @param {string} method

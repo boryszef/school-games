@@ -26,7 +26,7 @@ To play, one player opens the game and gets a 6-character game code, shown in la
 
 The browsers talk to each other over a WebRTC data channel (`src/core/net/`). To set it up, each side has to learn the other's network addresses and encryption fingerprint. The host's description (the "offer") and the guest's reply (the "answer") are passed through a small Cloudflare Worker (`worker/`) under the game code. The Worker deletes the room as soon as the host has the answer, or after 10 minutes at most.
 
-The Worker also hands out short-lived TURN credentials from Cloudflare. When two networks block a direct connection (some schools, offices and mobile carriers do), the game traffic goes through Cloudflare's TURN relay instead. Otherwise it never passes through any server.
+Game traffic never passes through any server. Cloudflare's free STUN server tells each browser its public address. There is no TURN relay, because Cloudflare TURN needs a payment card on file. So some strict networks (some schools, offices and mobile carriers) block the direct connection, and the game then says so. Players on the same Wi-Fi almost always connect.
 
 ## Development
 
@@ -39,7 +39,7 @@ npm run serve        # http://localhost:8000
 npm run worker:dev   # the Worker with a local database, http://localhost:8787
 ```
 
-On `localhost` the app uses the local Worker. Before the first `worker:dev`, create the local database with `npx wrangler d1 migrations apply school-games --local --config worker/wrangler.jsonc`. Two-player games need TURN credentials even locally: put `TURN_KEY_API_TOKEN=...` in `worker/.dev.vars` (git-ignored).
+On `localhost` the app uses the local Worker. Before the first `worker:dev`, create the local database with `npx wrangler d1 migrations apply school-games --local --config worker/wrangler.jsonc`.
 
 ES modules need to be served over HTTP, so opening `index.html` directly from disk won't work.
 
@@ -61,7 +61,7 @@ fonts/                 emoji fallback font (see below)
 src/core/              app, routing, storage, players, i18n, shared UI (number pad, d-pad, QR code, two-player lobby)
 src/core/net/          peer-to-peer connection: room codes, WebRTC
 src/core/online/       calls to the Worker
-worker/                Cloudflare Worker: rooms for two-player games, TURN credentials
+worker/                Cloudflare Worker: rooms for two-player games
 src/vendor/            vendored third-party code (QR code encoder)
 src/screens/           home, players, game host
 src/games/<id>/        one folder per game
@@ -92,9 +92,8 @@ Everything below fits in Cloudflare's free tier, and no payment card is needed.
 
 1. Create a Cloudflare account, then run `npx wrangler login`.
 2. Run `npx wrangler d1 create school-games`, and put the printed `database_id` into `worker/wrangler.jsonc`.
-3. In the dashboard, under Realtime → TURN, create a TURN key. Put its id into `TURN_KEY_ID` in `worker/wrangler.jsonc`, and store its API token with `npx wrangler secret put TURN_KEY_API_TOKEN --config worker/wrangler.jsonc`.
-4. Create an API token with the "Edit Cloudflare Workers" template plus D1 edit rights. Add it and your account id to the GitHub repository secrets as `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`.
-5. After the first deploy, put the Worker's `*.workers.dev` address into `API_URL` in `src/core/online/api.js`.
+3. Create an API token with the "Edit Cloudflare Workers" template plus D1 edit rights. Add it and your account id to the GitHub repository secrets as `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`.
+4. After the first deploy, put the Worker's `*.workers.dev` address into `API_URL` in `src/core/online/api.js`.
 
 ## License
 

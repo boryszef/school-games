@@ -4,7 +4,7 @@ import { log } from "../log.js";
 const API_URL =
   location.hostname === "localhost"
     ? "http://localhost:8787"
-    : "https://school-games.REPLACE_WITH_SUBDOMAIN.workers.dev";
+    : "https://school-games.boryszef.workers.dev";
 
 /** The Worker could not be reached at all (offline, DNS, CORS). */
 export class ServerUnreachableError extends Error {

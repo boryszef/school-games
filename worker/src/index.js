@@ -1,20 +1,14 @@
 import { createApp } from "./app.js";
-import { cloudflareTurn } from "./turn.js";
 
 /**
  * @typedef {object} Env
  * @property {import("./db.js").Db} DB
- * @property {{limit: (options: {key: string}) => Promise<{success: boolean}>}} SIGNALLING_LIMIT
- * @property {string} TURN_KEY_ID
- * @property {string} TURN_KEY_API_TOKEN Secret.
+ * @property {{limit: (options: {key: string}) => Promise<{success: boolean}>}} ROOMS_LIMIT
  */
 
 const ALLOWED_ORIGINS = ["https://boryszef.github.io", "http://localhost:8000"];
-/** Requests that create something or cost TURN allowance; per IP, without storing the IP. */
-const LIMITED = [
-  ["POST", "/rooms"],
-  ["GET", "/turn"],
-];
+/** Creating rooms is limited per IP, without storing the IP. */
+const LIMITED = [["POST", "/rooms"]];
 
 export default {
   /**
@@ -36,7 +30,6 @@ export default {
       db: env.DB,
       now: Date.now,
       randomBytes: (size) => crypto.getRandomValues(new Uint8Array(size)),
-      turn: cloudflareTurn(env.TURN_KEY_ID, env.TURN_KEY_API_TOKEN),
     });
     const response = await app.handle(request);
     for (const [name, value] of Object.entries(cors)) response.headers.set(name, value);
@@ -68,6 +61,6 @@ function _isLimited(request) {
 async function _withinLimit(request, env) {
   // Cloudflare always sets this header, also in `wrangler dev`.
   const ip = /** @type {string} */ (request.headers.get("CF-Connecting-IP"));
-  const { success } = await env.SIGNALLING_LIMIT.limit({ key: ip });
+  const { success } = await env.ROOMS_LIMIT.limit({ key: ip });
   return success;
 }
