@@ -18,7 +18,11 @@ export function renderGameScreen(root, app, route) {
   log.info(`starting ${game.id} for player ${playerId}`);
   root.replaceChildren();
   return game.mount(root, {
-    player: { id: playerId, name: app.data.players[playerId].name },
+    player: {
+      id: playerId,
+      name: app.data.players[playerId].name,
+      account: app.data.players[playerId].account ?? null,
+    },
     t: app.t,
     recordRun: (result) =>
       app.update((d) =>

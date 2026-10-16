@@ -27,6 +27,11 @@ export function renderHome(root, app) {
     h("h1", {}, t("home.title")),
     notice,
     h("div", { class: "game-grid" }, ...tiles),
+    h(
+      "p",
+      { class: "home-leaderboard" },
+      h("a", { href: "#/leaderboard", class: "button" }, t("home.leaderboard")),
+    ),
   );
   return () => {};
 }

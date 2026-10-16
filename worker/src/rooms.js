@@ -1,7 +1,7 @@
 import { ROOM_CODE_LENGTH, roomCodeFrom } from "../../src/core/net/room-code.js";
 
 /** @typedef {import("./db.js").Db} Db */
-/** @typedef {{status: number, body?: object}} Reply */
+/** @typedef {import("./http.js").Reply} Reply */
 
 const ROOM_TTL_MS = 10 * 60 * 1000;
 

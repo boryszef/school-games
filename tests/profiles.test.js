@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { emptyData } from "../src/core/storage.js";
-import { addPlayer, bestTime, missedFacts, recordRun } from "../src/core/profiles.js";
+import { addPlayer, bestTime, missedFacts, recordRun, setAccount } from "../src/core/profiles.js";
 
 /**
  * @param {string} playerId
@@ -27,6 +27,22 @@ test("addPlayer stores the player without mutating the input", () => {
   const after = addPlayer(before, "Ala", "a");
   assert.equal(after.players.a.name, "Ala");
   assert.deepEqual(before.players, {});
+});
+
+test("setAccount renames the player to the nickname and keeps everything else", () => {
+  const before = recordRun(withTwoPlayers(), run("a", 60000));
+  const account = { id: "i".repeat(22), token: "t".repeat(43) };
+  const after = setAccount(before, "a", "RedFox1", account);
+
+  assert.deepEqual(after.players.a, {
+    name: "RedFox1",
+    createdAt: before.players.a.createdAt,
+    account,
+  });
+  assert.deepEqual(after.players.o, before.players.o);
+  assert.deepEqual(after.runs, before.runs);
+  assert.equal(before.players.a.name, "Ala");
+  assert.equal(before.players.a.account, undefined);
 });
 
 test("recordRun appends the run", () => {

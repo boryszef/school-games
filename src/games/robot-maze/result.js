@@ -14,8 +14,9 @@ import { h } from "../../core/ui/dom.js";
  * @param {Translate} t
  * @param {ResultSummary} summary
  * @param {ResultActions} actions
+ * @param {HTMLElement | null} prompt The leaderboard prompt, for a server-timed run.
  */
-export function createResultPanel(t, summary, actions) {
+export function createResultPanel(t, summary, actions, prompt) {
   const { timeMs, mistakes, previousBestMs } = summary;
   const record =
     previousBestMs !== null && timeMs >= previousBestMs
@@ -32,6 +33,7 @@ export function createResultPanel(t, summary, actions) {
       h("p", { class: "rm-final-time" }, t("robotMaze.yourTime", { time: formatTime(timeMs) })),
       h("p", {}, t("robotMaze.mistakes", { count: mistakes })),
       record,
+      prompt ?? "",
       h(
         "button",
         { type: "button", class: "button", onclick: actions.onPlayAgain },

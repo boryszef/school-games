@@ -17,6 +17,7 @@ export const messages = {
     "tugOfWar.waitingForHost": "Czekam, aż {name} zacznie nową grę…",
     "tugOfWar.home": "Wybierz inną grę",
     "tugOfWar.connectionLost": "Połączenie zostało przerwane.",
+    "tugOfWar.reported": "Wysłano! Wygrana się liczy, gdy obie osoby powiedzą „Tak”.",
   },
   en: {
     "tugOfWar.title": "Tug of War",
@@ -36,5 +37,6 @@ export const messages = {
     "tugOfWar.waitingForHost": "Waiting for {name} to start a new game…",
     "tugOfWar.home": "Choose another game",
     "tugOfWar.connectionLost": "The connection was lost.",
+    "tugOfWar.reported": "Sent! The win counts once both players have said yes.",
   },
 };

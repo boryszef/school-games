@@ -21,6 +21,8 @@ import { placeRobots } from "./robots.js";
 /** @typedef {{size: number, robotCount: number, rng: Rng}} GameConfig */
 
 export const PENALTY_MS = 5000;
+/** The game everyone plays; the Worker replays runs with the same settings. */
+export const STANDARD_GAME = { size: 10, robotCount: 10 };
 
 /**
  * @param {GameConfig} config

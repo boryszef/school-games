@@ -2,12 +2,12 @@
 
 ## Summary
 
-Education games is a static web app (HTML, CSS and ES-module JavaScript with no runtime dependencies or backend) that hosts learning games for young kids. The first game, **Robot Maze**, practises the 10×10 multiplication table. The child walks through a 10×10 maze. Ten robots block the path to the exit, and each robot is disabled by typing the product of its cell's coordinates. A wrong answer costs 5 seconds. A faster time is a better result. Player profiles, results and statistics are stored only in the browser. The UI is in Polish and English. The platform has a plug-in contract so more games can be added later. Two-player games connect two browsers directly over WebRTC. A small Cloudflare Worker only passes the connection details between them through a short room code (shown as a link and a QR code). The second game, **Tug of War**, is such a duel: both players get the same multiplication, and the faster correct answer tugs the rope. Sources: [plan.md](plan.md), [plan-tug-of-war.md](plan-tug-of-war.md), [plan-pvp-rooms.md](plan-pvp-rooms.md).
+Education games is a static web app (HTML, CSS and ES-module JavaScript with no runtime dependencies or backend) that hosts learning games for young kids. The first game, **Robot Maze**, practises the 10×10 multiplication table. The child walks through a 10×10 maze. Ten robots block the path to the exit, and each robot is disabled by typing the product of its cell's coordinates. A wrong answer costs 5 seconds. A faster time is a better result. Players get generated nicknames such as `RedFox1`. Their results and statistics are stored in the browser, and after a game a player can add the score to an online leaderboard. The UI is in Polish and English. The platform has a plug-in contract so more games can be added later. Two-player games connect two browsers directly over WebRTC. A small Cloudflare Worker only passes the connection details between them through a short room code (shown as a link and a QR code). The second game, **Tug of War**, is such a duel: both players get the same multiplication, and the faster correct answer tugs the rope. Sources: [plan.md](plan.md), [plan-tug-of-war.md](plan-tug-of-war.md), [plan-pvp-rooms.md](plan-pvp-rooms.md), [plan-leaderboard.md](plan-leaderboard.md).
 
 ## R1 – Platform
 
 - R1.1 The app is static files only, with one exception: the small Cloudflare Worker in `worker/` (free tier, R6), which accepts requests only from the app's own origins. Nothing is fetched from a CDN or installed from npm at runtime. Third-party code is allowed only as a vendored, licence-compatible file under `src/vendor/` with its source and licence noted in a header. It must be served over HTTP(S) because it uses ES modules.
-- R1.2 Hash routing: `#/` home (list of games), `#/players` (profiles), `#/game/<id>` (a game) and `#/game/<id>/<arg>`, where `<arg>` is the rest of the hash, passed to the game.
+- R1.2 Hash routing: `#/` home (list of games), `#/players` (profiles), `#/leaderboard` (R8), `#/game/<id>` (a game) and `#/game/<id>/<arg>`, where `<arg>` is the rest of the hash, passed to the game.
 - R1.3 A game is a module that registers a `GameDefinition` (`id`, `titleKey`, `icon`, `messages: {pl, en}`, `mount(root, ctx) → unmount`). The `GameContext` passed to `mount` provides `player`, `t`, `recordRun(result)`, `exit()` and `arg` (the route's `<arg>`, or `null`). Adding a game means adding a folder under `src/games/` and one registration line.
 - R1.4 The on-screen number pad and direction pad are reusable core UI components.
 - R1.5 Logging goes through a small logger. Debug output is enabled with `?debug=1`.
@@ -19,9 +19,9 @@ Education games is a static web app (HTML, CSS and ES-module JavaScript with no 
 
 ## R3 – Players and persistence
 
-- R3.1 A player can be created by name and selected. A game can only be started with a selected player. If a game link is opened without one, the app asks for a player and then returns to that link.
+- R3.1 A player is created with the **New player** button and gets a nickname from the Worker (R8.1). There is no name input. Creating a player needs internet; if the Worker can't be reached, "Can't reach the game server" is shown and the button can be pressed again. A player can be selected. A game can only be started with a selected player. If a game link is opened without one, the app asks for a player and then returns to that link.
 - R3.2 All state lives in `localStorage` under a single key `schoolGames` as `{version: 1, data}`.
-- R3.3 `data` holds `lang`, `currentPlayerId`, `players` and `runs`. A run is `{playerId, gameId, finishedAt, timeMs, penaltyMs, mistakes}`, where `timeMs` includes the penalties and `mistakes` is a list of `[row, col]` pairs.
+- R3.3 `data` holds `lang`, `currentPlayerId`, `players` and `runs`. A player is `{name, createdAt, account?}`, where `name` is the nickname and `account` is `{id, token}` from the Worker. A run is `{playerId, gameId, finishedAt, timeMs, penaltyMs, mistakes}`, where `timeMs` includes the penalties and `mistakes` is a list of `[row, col]` pairs.
 - R3.4 The best time per player and game is the minimum `timeMs` of their runs.
 - R3.5 The most-missed products per player and game are the `[row, col]` pairs from their runs' `mistakes`, ranked by count (most frequent first). They are only displayed and don't affect gameplay.
 - R3.6 Data with an unknown `version` is an error. It is not silently discarded.
@@ -36,12 +36,12 @@ Education games is a static web app (HTML, CSS and ES-module JavaScript with no 
 - R4.6 A correct answer disables the robot and moves the player into its cell.
 - R4.7 A wrong answer adds a 5000 ms penalty, records the `[row, col]` mistake and keeps the challenge open for a retry. The UI shows "try again" feedback.
 - R4.8 Answers are typed on the keyboard (`inputmode="numeric"`) or with the on-screen number pad.
-- R4.9 The timer starts on the first move and stops when the player reaches the exit. The displayed time includes penalties.
+- R4.9 The timer starts when the maze appears and stops when the player reaches the exit. The displayed time includes penalties.
 - R4.10 The result screen shows the total time, the number of mistakes and whether it is a new personal best. It offers "Play again" and "Home".
 
 ## R5 – Quality
 
-- R5.1 The pure logic (maze, path, robots, game state, profiles, storage, i18n parity, room codes, the Worker's room logic, Tug of War rules and message validation) is unit-tested with `node --test`.
+- R5.1 The pure logic (maze, path, robots, game state, profiles, storage, i18n parity, room codes, nicknames, the Worker's rooms, players, maze runs, duels and leaderboard, Tug of War rules and message validation) is unit-tested with `node --test`.
 - R5.2 Pre-commit hooks run Prettier, ESLint, `tsc --checkJs` (JSDoc types), knip (dead code) and the tests.
 - R5.3 The Node version is managed through nvm (`.nvmrc`).
 
@@ -77,4 +77,25 @@ Education games is a static web app (HTML, CSS and ES-module JavaScript with no 
 - R7.6 After a tug there is a short pause (about 1.2 s) for the animation, then the next question.
 - R7.7 Answers are typed on the keyboard or with the on-screen number pad.
 - R7.8 Both players' names are shown at the ends of the rope. The result screen shows the winner and offers "Play again" (started by the host; the guest waits) and "Home".
-- R7.9 Matches are not saved to the player's stats.
+- R7.9 Matches are not saved to the player's stats. A win can be added to the leaderboard as in R8.5.
+
+## R8 – Leaderboard
+
+- R8.1 **Nicknames.** `POST /players` creates a player with a nickname `<Color><Animal><N>`, such as `RedFox1`. The Worker picks the color and animal at random from fixed English lists (`src/core/online/nickname.js`). `N` is the next free number for that color and animal, so nicknames are unique. The response also gives a public id and a secret token. Creating players is limited to 10 a minute per IP.
+- R8.2 **Existing players.** At app start, every player without an account is registered and renamed to its new nickname. Runs and stats stay. If the Worker can't be reached, this is tried again at the next start, and until then the player can't add scores.
+- R8.3 **Prompt.** When a game ends, a player with an account is asked "Add your score to the leaderboard?" with **Yes** and **No**. Nothing is sent without **Yes**.
+- R8.4 **Robot Maze times.**
+  - With an account, a round starts with `POST /maze-runs`, which returns a run id and the maze seed, and the server notes the start time. The maze is built from that seed, and the player's moves and answers are recorded.
+  - On **Yes**, they are sent to `POST /maze-runs/:id/finish`. The Worker replays them with the game's own rules, and the run counts only if the replay reaches the exit. The leaderboard time is the server's elapsed time plus 5 s per wrong answer, and the result card shows it.
+  - Each run can be finished once, within 1 hour, and only by its own player. At most 2000 actions are accepted.
+  - If the Worker can't be reached at the start, the round is played locally and no prompt is shown.
+- R8.5 **Tug of War wins.**
+  - Both players are asked. On **Yes**, each sends `{matchId, opponentId, won}`.
+  - A win counts only when both reports for a match agree: each names the other, and exactly one won. Reports that disagree are discarded.
+  - At most 3 wins per winner and opponent count per UTC day.
+  - The prompt appears only when both players have an account.
+- R8.6 **Rankings.** `#/leaderboard` shows, for each game, the top 10 all-time and the top 10 this week (since Monday 00:00 UTC):
+  - Robot Maze: each player's best time, fastest first.
+  - Tug of War: number of wins, most first.
+  - The current player's row is highlighted.
+- R8.7 **Privacy.** No real names are stored: nicknames are generated. The Worker stores no IP addresses, and keeps only a hash of each token. The token is sent only to the Worker and never to the other player; the other player sees only the public id.

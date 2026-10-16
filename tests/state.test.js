@@ -109,3 +109,8 @@ test("solving every robot on the path and reaching the exit finishes the game", 
   assert.equal(state.finished, true);
   assert.ok(state.robots.every((r) => !r.active));
 });
+
+test("the same seed always gives the same game, which the server's replay relies on", () => {
+  assert.deepEqual(newGame(123456789), newGame(123456789));
+  assert.notDeepEqual(newGame(1).robots, newGame(2).robots);
+});

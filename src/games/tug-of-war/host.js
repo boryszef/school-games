@@ -1,4 +1,5 @@
 import { log } from "../../core/log.js";
+import { createDuelPrompt, newMatchId } from "./leaderboard.js";
 import { GRACE_MS, createMatch, recordAnswer, resolveRound } from "./match.js";
 import { parseGuestMessage } from "./protocol.js";
 import { createMatchView } from "./view.js";
@@ -26,20 +27,28 @@ export function runHost(root, ctx, channel) {
   let state = createMatch(Math.random);
   /** @type {ReturnType<typeof setTimeout> | undefined} */
   let timer;
+  /** A new one for every match, set by `start`. */
+  let matchId = "";
+  /** @type {string | null} */
+  let opponentId = null;
   const view = createMatchView(root, {
     t: ctx.t,
     myName: ctx.player.name,
     onCorrect: ({ reactionMs }) => record("host", state.round, reactionMs),
     onPlayAgain: start,
     onHome: ctx.exit,
+    prompt: (won) =>
+      createDuelPrompt(ctx.t, { account: ctx.player.account, opponentId, matchId, won }),
   });
   /** @param {HostMessage} message */
   const send = (message) => channel.send(message);
 
   channel.onMessage((raw) => {
     const message = parseGuestMessage(raw);
-    if (message.type === "hello") view.setOpponent(message.name);
-    else if (message.value === state.question.a * state.question.b) {
+    if (message.type === "hello") {
+      opponentId = message.playerId;
+      view.setOpponent(message.name);
+    } else if (message.value === state.question.a * state.question.b) {
       record("guest", message.round, message.reactionMs);
     } else log.debug("ignored a wrong answer from the guest", message);
   });
@@ -47,13 +56,14 @@ export function runHost(root, ctx, channel) {
     clearTimeout(timer);
     view.connectionLost();
   });
-  send({ type: "hello", name: ctx.player.name });
+  send({ type: "hello", name: ctx.player.name, playerId: ctx.player.account?.id ?? null });
   start();
 
   function start() {
     clearTimeout(timer);
     state = createMatch(Math.random);
-    send({ type: "start" });
+    matchId = newMatchId();
+    send({ type: "start", matchId });
     view.reset();
     timer = setTimeout(ask, START_DELAY_MS);
   }

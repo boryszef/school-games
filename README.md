@@ -2,7 +2,7 @@
 
 ## Summary
 
-Small learning games for young kids. The app runs in the browser: it is static HTML, CSS and JavaScript with nothing fetched or installed at runtime. Two-player games connect the players' browsers directly to each other; a small Cloudflare Worker on the free tier only helps them find each other. Progress is kept in the browser's `localStorage`. The interface is in Polish and English.
+Small learning games for young kids. The app runs in the browser: it is static HTML, CSS and JavaScript with nothing fetched or installed at runtime. Two-player games connect the players' browsers directly to each other. A small Cloudflare Worker on the free tier helps them find each other and keeps an online leaderboard. Players get generated nicknames such as `RedFox1`, so no real names are stored anywhere. Progress is kept in the browser's `localStorage`. The interface is in Polish and English.
 
 ▶ **Play: https://boryszef.github.io/school-games/**
 
@@ -27,6 +27,17 @@ To play, one player opens the game and gets a 6-character game code, shown in la
 The browsers talk to each other over a WebRTC data channel (`src/core/net/`). To set it up, each side has to learn the other's network addresses and encryption fingerprint. The host's description (the "offer") and the guest's reply (the "answer") are passed through a small Cloudflare Worker (`worker/`) under the game code. The Worker deletes the room as soon as the host has the answer, or after 10 minutes at most.
 
 Game traffic never passes through any server. Cloudflare's free STUN server tells each browser its public address. There is no TURN relay, because Cloudflare TURN needs a payment card on file. So some strict networks (some schools, offices and mobile carriers) block the direct connection, and the game then says so. Players on the same Wi-Fi almost always connect.
+
+## Players and the leaderboard
+
+There are no typed names. **New player** asks the Worker for a nickname `<Color><Animal><N>`, such as `RedFox1`. The Worker picks the color and animal at random, and `N` is the next free number for that pair, so nicknames are unique. Creating a player therefore needs internet; playing doesn't. Players created before nicknames existed are renamed automatically the next time the app starts online.
+
+After a game the player is asked whether to add the score to the leaderboard (`#/leaderboard`, top 10 per game, all-time and this week):
+
+- **Robot Maze** times are measured by the Worker, not the browser. The maze is built from a seed the Worker hands out when the round starts. When the player says yes, the Worker replays the recorded moves and answers with the game's own rules (`src/games/robot-maze/state.js`). It counts the run only if the replay reaches the flag, and the time is its own clock plus the penalties.
+- **Tug of War** wins count only when both players say yes and their reports agree, and at most 3 wins against the same opponent count per day.
+
+Each player has a secret token, of which the Worker keeps only a hash. The Worker stores no IP addresses.
 
 ## Development
 
@@ -61,7 +72,7 @@ fonts/                 emoji fallback font (see below)
 src/core/              app, routing, storage, players, i18n, shared UI (number pad, d-pad, QR code, two-player lobby)
 src/core/net/          peer-to-peer connection: room codes, WebRTC
 src/core/online/       calls to the Worker
-worker/                Cloudflare Worker: rooms for two-player games
+worker/                Cloudflare Worker: rooms for two-player games, players and the leaderboard
 src/vendor/            vendored third-party code (QR code encoder)
 src/screens/           home, players, game host
 src/games/<id>/        one folder per game

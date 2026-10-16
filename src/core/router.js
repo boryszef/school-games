@@ -1,5 +1,5 @@
 /**
- * @typedef {{name: "home"} | {name: "players"} | {name: "game", id: string, arg: string | null} | {name: "notFound"}} Route
+ * @typedef {{name: "home"} | {name: "players"} | {name: "leaderboard"} | {name: "game", id: string, arg: string | null} | {name: "notFound"}} Route
  */
 
 /** @type {Record<string, Route>} */
@@ -7,6 +7,7 @@ const STATIC_ROUTES = {
   "": { name: "home" },
   "#/": { name: "home" },
   "#/players": { name: "players" },
+  "#/leaderboard": { name: "leaderboard" },
 };
 
 /** `#/game/<id>` or `#/game/<id>/<arg>`, where `<arg>` is the rest of the hash. */

@@ -1,5 +1,6 @@
 /** @typedef {import("./storage.js").AppData} AppData */
 /** @typedef {import("./storage.js").Run} Run */
+/** @typedef {import("./storage.js").Account} Account */
 /** @typedef {{row: number, col: number, count: number}} MissedFact */
 
 /**
@@ -10,6 +11,19 @@
  */
 export function addPlayer(data, name, id) {
   const player = { name, createdAt: new Date().toISOString() };
+  return { ...data, players: { ...data.players, [id]: player } };
+}
+
+/**
+ * Gives the player the nickname and account the Worker registered.
+ * @param {AppData} data
+ * @param {string} id
+ * @param {string} nickname
+ * @param {Account} account
+ * @returns {AppData}
+ */
+export function setAccount(data, id, nickname, account) {
+  const player = { ...data.players[id], name: nickname, account };
   return { ...data, players: { ...data.players, [id]: player } };
 }
 

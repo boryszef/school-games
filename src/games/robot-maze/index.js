@@ -1,23 +1,30 @@
 import { formatTime } from "../../core/format.js";
 import { log } from "../../core/log.js";
+import { ApiError, ServerUnreachableError, callApi } from "../../core/online/api.js";
+import { createRng } from "../../core/random.js";
 import { createTimer } from "../../core/timer.js";
 import { h, loadStylesheet } from "../../core/ui/dom.js";
 import { createDpad } from "../../core/ui/dpad.js";
+import { createLeaderboardPrompt } from "../../core/ui/leaderboard-prompt.js";
 import { createBoard } from "./board.js";
 import { createChallengeDialog } from "./challenge.js";
 import { messages } from "./i18n.js";
 import { DIRECTIONS, stepFrom } from "./maze.js";
 import { positionKey } from "./path.js";
 import { createResultPanel } from "./result.js";
-import { answer, createGame, move } from "./state.js";
+import { STANDARD_GAME, answer, createGame, move } from "./state.js";
 
 /** @typedef {import("../../core/registry.js").GameContext} GameContext */
 /** @typedef {import("./maze.js").Direction} Direction */
 /** @typedef {import("./maze.js").Position} Position */
 /** @typedef {import("./state.js").GameState} GameState */
+/** @typedef {import("../../core/storage.js").Account} Account */
+/** @typedef {Direction | {answer: number}} Action */
+/**
+ * A run the Worker times (R8.4): the maze comes from its seed, and the moves are recorded.
+ * @typedef {{runId: string, seed: number, token: string}} ServerRun
+ */
 
-const SIZE = 10;
-const ROBOT_COUNT = 10;
 const CLOCK_REFRESH_MS = 100;
 
 /** @type {Record<string, Direction>} */
@@ -51,14 +58,59 @@ export const robotMaze = {
 };
 
 /**
- * Plays one maze; returns a cleanup function.
+ * Gets a server-timed run for a registered player, then plays the maze; returns a cleanup
+ * function.
  * @param {HTMLElement} root
  * @param {GameContext} ctx
  * @param {() => void} restart
  */
 function _startRound(root, ctx, restart) {
+  let cancelled = false;
+  let stopRound = () => {};
+  root.replaceChildren(h("p", { class: "rm-preparing" }, ctx.t("robotMaze.preparing")));
+  _serverRun(ctx.player.account).then((run) => {
+    if (!cancelled) stopRound = _playRound(root, ctx, restart, run);
+  });
+  return () => {
+    cancelled = true;
+    stopRound();
+  };
+}
+
+/**
+ * @param {Account | null} account
+ * @returns {Promise<ServerRun | null>} Null without an account or when the Worker can't be
+ *   reached; the round is then played locally and can't be added to the leaderboard.
+ */
+async function _serverRun(account) {
+  if (account === null) return null;
+  try {
+    const { data } = await callApi("POST", "/maze-runs", { token: account.token, expect: [201] });
+    log.debug("server-timed run", data.runId);
+    return { runId: data.runId, seed: data.seed, token: account.token };
+  } catch (error) {
+    if (!(error instanceof ServerUnreachableError || error instanceof ApiError)) throw error;
+    log.info("playing offline: this run can't be added to the leaderboard");
+    return null;
+  }
+}
+
+/**
+ * Plays one maze; returns a cleanup function.
+ * @param {HTMLElement} root
+ * @param {GameContext} ctx
+ * @param {() => void} restart
+ * @param {ServerRun | null} run
+ */
+function _playRound(root, ctx, restart, run) {
   const { t } = ctx;
-  let state = createGame({ size: SIZE, robotCount: ROBOT_COUNT, rng: Math.random });
+  let state = createGame({
+    ...STANDARD_GAME,
+    rng: run === null ? Math.random : createRng(run.seed),
+  });
+  /** Only actions that changed the game; the ignored ones replay as nothing anyway. */
+  /** @type {Action[]} */
+  const actions = [];
   const timer = createTimer();
   const clock = h("span", { class: "rm-clock" }, formatTime(0));
   const board = createBoard(state.maze, (pos) => tryMove(_directionTowards(state.player, pos)));
@@ -76,6 +128,7 @@ function _startRound(root, ctx, restart) {
     ),
   );
   board.update(state);
+  timer.start();
   const ticker = setInterval(() => (clock.textContent = formatTime(totalMs())), CLOCK_REFRESH_MS);
   window.addEventListener("keydown", onKey);
 
@@ -94,13 +147,15 @@ function _startRound(root, ctx, restart) {
   /** @param {Direction | undefined} dir undefined when a tapped cell is not adjacent. */
   function tryMove(dir) {
     if (dir === undefined) return;
-    timer.start();
-    apply(move(state, dir));
+    const next = move(state, dir);
+    if (next !== state) actions.push(dir);
+    apply(next);
   }
 
   /** @param {number} value */
   function submitAnswer(value) {
     const penaltyBefore = state.penaltyMs;
+    actions.push({ answer: value });
     apply(answer(state, value));
     if (state.penaltyMs > penaltyBefore) dialog.showWrong();
   }
@@ -128,6 +183,7 @@ function _startRound(root, ctx, restart) {
         t,
         { timeMs, mistakes: state.mistakes.length, previousBestMs },
         { onPlayAgain: restart, onHome: ctx.exit },
+        run === null ? null : _prompt(t, run, actions),
       ),
     );
   }
@@ -136,6 +192,23 @@ function _startRound(root, ctx, restart) {
     clearInterval(ticker);
     window.removeEventListener("keydown", onKey);
   };
+}
+
+/**
+ * @param {import("../../core/i18n.js").Translate} t
+ * @param {ServerRun} run
+ * @param {Action[]} actions
+ */
+function _prompt(t, run, actions) {
+  return createLeaderboardPrompt(t, async () => {
+    const { data } = await callApi("POST", `/maze-runs/${run.runId}/finish`, {
+      token: run.token,
+      body: { actions },
+      expect: [200],
+    });
+    log.info(`added to the leaderboard: ${data.timeMs} ms`);
+    return t("robotMaze.leaderboardTime", { time: formatTime(data.timeMs) });
+  });
 }
 
 /**

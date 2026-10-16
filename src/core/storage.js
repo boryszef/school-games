@@ -1,6 +1,12 @@
 import { log } from "./log.js";
 
-/** @typedef {{name: string, createdAt: string}} Player */
+/** @typedef {{id: string, token: string}} Account The player's identity on the Worker. */
+/**
+ * @typedef {object} Player
+ * @property {string} name The generated nickname (a typed name for players from before them).
+ * @property {string} createdAt
+ * @property {Account} [account] Missing until the Worker has registered the player.
+ */
 /**
  * @typedef {object} Run
  * @property {string} playerId

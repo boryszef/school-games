@@ -1,4 +1,5 @@
-// The School Games Worker: rooms for two-player games (docs/plan-pvp-rooms.md).
+// The School Games Worker: rooms for two-player games and the leaderboard
+// (docs/plan-pvp-rooms.md, docs/plan-leaderboard.md).
 {
   "$schema": "../node_modules/wrangler/config-schema.json",
   "name": "school-games",
@@ -13,12 +14,17 @@
       "migrations_dir": "migrations",
     },
   ],
-  // Per IP: 20 new rooms a minute.
+  // Per IP: 20 new rooms and 10 new players a minute.
   "ratelimits": [
     {
       "name": "ROOMS_LIMIT",
       "namespace_id": "1001",
       "simple": { "limit": 20, "period": 60 },
+    },
+    {
+      "name": "PLAYERS_LIMIT",
+      "namespace_id": "1002",
+      "simple": { "limit": 10, "period": 60 },
     },
   ],
 }

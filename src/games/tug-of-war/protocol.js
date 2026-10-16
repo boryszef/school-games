@@ -8,14 +8,14 @@ import { ROPE_TO_WIN } from "./match.js";
 
 /** @typedef {import("./match.js").Side} Side */
 /**
- * @typedef {{type: "hello", name: string}
- *   | {type: "start"}
+ * @typedef {{type: "hello", name: string, playerId: string | null}
+ *   | {type: "start", matchId: string}
  *   | {type: "question", round: number, a: number, b: number}
  *   | {type: "tug", round: number, winner: Side, rope: number}
  *   | {type: "end", winner: Side}} HostMessage
  */
 /**
- * @typedef {{type: "hello", name: string}
+ * @typedef {{type: "hello", name: string, playerId: string | null}
  *   | {type: "answer", round: number, value: number, reactionMs: number}} GuestMessage
  */
 
@@ -41,11 +41,16 @@ const factor = integerIn(2, 10);
 const side = (v) => v === "host" || v === "guest";
 /** @type {Check} */
 const name = (v) => typeof v === "string" && v.length >= 1 && v.length <= MAX_NAME_LENGTH;
+/** The other player's public leaderboard id, or null without one. */
+/** @type {Check} */
+const playerId = (v) => v === null || (typeof v === "string" && /^[A-Za-z0-9_-]{22}$/.test(v));
+/** @type {Check} */
+const matchId = (v) => typeof v === "string" && /^[A-Za-z0-9_-]{12}$/.test(v);
 
 /** @type {Record<string, Record<string, Check>>} */
 const HOST_MESSAGES = {
-  hello: { name },
-  start: {},
+  hello: { name, playerId },
+  start: { matchId },
   question: { round, a: factor, b: factor },
   tug: { round, winner: side, rope: integerIn(-ROPE_TO_WIN, ROPE_TO_WIN) },
   end: { winner: side },
@@ -53,7 +58,7 @@ const HOST_MESSAGES = {
 
 /** @type {Record<string, Record<string, Check>>} */
 const GUEST_MESSAGES = {
-  hello: { name },
+  hello: { name, playerId },
   answer: {
     round,
     value: integerIn(0, Number.MAX_SAFE_INTEGER),

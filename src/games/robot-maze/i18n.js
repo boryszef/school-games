@@ -14,6 +14,8 @@ export const messages = {
     "robotMaze.best": "Twój rekord: {time}",
     "robotMaze.playAgain": "Zagraj jeszcze raz",
     "robotMaze.home": "Wybierz inną grę",
+    "robotMaze.preparing": "Przygotowuję labirynt…",
+    "robotMaze.leaderboardTime": "Dodano! Czas w rankingu: {time}",
   },
   en: {
     "robotMaze.title": "Robot Maze",
@@ -30,5 +32,7 @@ export const messages = {
     "robotMaze.best": "Your record: {time}",
     "robotMaze.playAgain": "Play again",
     "robotMaze.home": "Choose another game",
+    "robotMaze.preparing": "Preparing the maze…",
+    "robotMaze.leaderboardTime": "Added! Leaderboard time: {time}",
   },
 };

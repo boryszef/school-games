@@ -1,5 +1,7 @@
 import { formatTime } from "../core/format.js";
-import { addPlayer, bestTime, missedFacts, selectPlayer } from "../core/profiles.js";
+import { registerPlayer } from "../core/online/accounts.js";
+import { ApiError, ServerUnreachableError } from "../core/online/api.js";
+import { addPlayer, bestTime, missedFacts, selectPlayer, setAccount } from "../core/profiles.js";
 import { listGames } from "../core/registry.js";
 import { h } from "../core/ui/dom.js";
 
@@ -15,7 +17,7 @@ export function renderPlayers(root, app) {
   root.replaceChildren(
     h("h1", {}, t("players.title")),
     players.length === 0 ? h("p", {}, t("players.empty")) : _playerList(app),
-    _newPlayerForm(app),
+    _newPlayerButton(app),
     data.currentPlayerId === null ? "" : _playerStats(app, data.currentPlayerId),
   );
   return () => {};
@@ -48,29 +50,34 @@ function _playerList(app) {
   );
 }
 
-/** @param {App} app */
-function _newPlayerForm(app) {
-  const name = h("input", {
-    required: true,
-    maxlength: 20,
-    placeholder: app.t("players.namePlaceholder"),
-    "aria-label": app.t("players.namePlaceholder"),
-  });
-  const form = h(
-    "form",
-    { class: "player-form" },
-    name,
-    h("button", { type: "submit" }, app.t("players.add")),
+/**
+ * The Worker picks the nickname, so creating a player needs internet (R3.1).
+ * @param {App} app
+ */
+function _newPlayerButton(app) {
+  const button = h(
+    "button",
+    { type: "button", class: "button secondary" },
+    `+ ${app.t("players.new")}`,
   );
-  form.addEventListener("submit", (event) => {
-    event.preventDefault();
-    const trimmed = name.value.trim();
-    if (trimmed === "") return;
-    const id = `p${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
-    app.update((d) => selectPlayer(addPlayer(d, trimmed, id), id));
-    _playerChosen(app);
+  const error = h("p", { class: "form-error", "aria-live": "polite" });
+  button.addEventListener("click", async () => {
+    button.disabled = true;
+    error.textContent = "";
+    try {
+      const { nickname, account } = await registerPlayer();
+      const id = `p${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+      app.update((d) =>
+        selectPlayer(setAccount(addPlayer(d, nickname, id), id, nickname, account), id),
+      );
+      _playerChosen(app);
+    } catch (caught) {
+      if (!(caught instanceof ServerUnreachableError || caught instanceof ApiError)) throw caught;
+      error.textContent = app.t("players.serverUnreachable");
+      button.disabled = false;
+    }
   });
-  return form;
+  return h("div", { class: "player-new" }, button, error);
 }
 
 /**

@@ -13,6 +13,7 @@ import { createRope } from "./rope.js";
  * @property {(answer: CorrectAnswer) => void} onCorrect
  * @property {(() => void) | null} onPlayAgain Null for the guest, who waits for the host.
  * @property {() => void} onHome
+ * @property {(won: boolean) => HTMLElement | null} prompt The leaderboard prompt, if offered.
  */
 
 /**
@@ -21,7 +22,7 @@ import { createRope } from "./rope.js";
  * @param {HTMLElement} root
  * @param {MatchViewOptions} options
  */
-export function createMatchView(root, { t, myName, onCorrect, onPlayAgain, onHome }) {
+export function createMatchView(root, { t, myName, onCorrect, onPlayAgain, onHome, prompt }) {
   let opponentName = "…";
   const rope = createRope(myName);
   const card = createQuestionCard(t, onCorrect);
@@ -73,7 +74,9 @@ export function createMatchView(root, { t, myName, onCorrect, onPlayAgain, onHom
     /** @param {boolean} won */
     finish(won) {
       card.lock();
-      showOverlay(createResultPanel(t, { won, opponentName, onPlayAgain, onHome }));
+      showOverlay(
+        createResultPanel(t, { won, opponentName, onPlayAgain, onHome, prompt: prompt(won) }),
+      );
     },
     connectionLost() {
       card.lock();

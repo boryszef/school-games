@@ -171,10 +171,13 @@ select {
   color: var(--accent-text);
 }
 
-.player-form {
-  display: flex;
-  gap: 8px;
+.player-new {
   margin: 16px 0;
+}
+
+.form-error {
+  color: var(--danger);
+  min-height: 1.5em;
 }
 
 .game-stats {
@@ -288,4 +291,61 @@ select {
   flex-wrap: wrap;
   justify-content: center;
   gap: 8px;
+}
+
+/* Leaderboard: the prompt after a game and the rankings screen. */
+.lb-prompt {
+  margin: 12px 0;
+  padding: 12px;
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.lb-prompt-actions {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+.lb-prompt-status {
+  min-height: 1.5em;
+}
+
+.home-leaderboard {
+  margin-top: 24px;
+  text-align: center;
+}
+
+.lb-section {
+  margin-bottom: 24px;
+}
+
+.lb-rankings {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.lb-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.lb-table th,
+.lb-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+}
+
+.lb-table td:last-child,
+.lb-table th:last-child {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.lb-table tr.is-me {
+  background: var(--accent);
+  color: var(--accent-text);
+  font-weight: 700;
 }

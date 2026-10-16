@@ -10,7 +10,7 @@ Two-player games no longer need the manual two-way code exchange. A small Cloudf
 - Rooms are anonymous, expire after 10 minutes and are deleted as soon as the host has the answer.
 - The answer link, the relay tab, the paste box and the SDP compression code are removed.
 
-This is part 1 of two. Part 2, an online hall of fame, reuses the same Worker.
+This is part 1 of two. Part 2, the online leaderboard ([plan-leaderboard.md](plan-leaderboard.md)), reuses the same Worker.
 
 ## Context
 

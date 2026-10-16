@@ -1,3 +1,4 @@
+import { createDuelPrompt } from "./leaderboard.js";
 import { parseHostMessage } from "./protocol.js";
 import { createMatchView } from "./view.js";
 
@@ -15,6 +16,10 @@ import { createMatchView } from "./view.js";
  */
 export function runGuest(root, ctx, channel) {
   let round = 0;
+  /** Set by the host's `start`, which always comes before the match's `end`. */
+  let matchId = "";
+  /** @type {string | null} */
+  let opponentId = null;
   /** @param {GuestMessage} message */
   const send = (message) => channel.send(message);
   const view = createMatchView(root, {
@@ -23,15 +28,19 @@ export function runGuest(root, ctx, channel) {
     onCorrect: ({ value, reactionMs }) => send({ type: "answer", round, value, reactionMs }),
     onPlayAgain: null,
     onHome: ctx.exit,
+    prompt: (won) =>
+      createDuelPrompt(ctx.t, { account: ctx.player.account, opponentId, matchId, won }),
   });
 
   channel.onMessage((raw) => {
     const message = parseHostMessage(raw);
     switch (message.type) {
       case "hello":
+        opponentId = message.playerId;
         view.setOpponent(message.name);
         break;
       case "start":
+        matchId = message.matchId;
         view.reset();
         break;
       case "question":
@@ -47,7 +56,7 @@ export function runGuest(root, ctx, channel) {
     }
   });
   channel.onClose(() => view.connectionLost());
-  send({ type: "hello", name: ctx.player.name });
+  send({ type: "hello", name: ctx.player.name, playerId: ctx.player.account?.id ?? null });
 
   return () => channel.close();
 }

@@ -31,19 +31,24 @@ export class ApiError extends Error {
 /**
  * @param {string} method
  * @param {string} path
- * @param {{body?: object, expect: number[]}} options `expect` lists the statuses the caller
- *   handles; any other status is an ApiError.
+ * @param {{body?: object, token?: string, expect: number[]}} options `token` is the player's
+ *   secret for the routes that need one; `expect` lists the statuses the caller handles, and any
+ *   other status is an ApiError.
  * @returns {Promise<{status: number, data: any}>} `data` is null for an empty answer.
  * @throws {ServerUnreachableError | ApiError}
  */
-export async function callApi(method, path, { body, expect }) {
+export async function callApi(method, path, { body, token, expect }) {
   const what = `${method} ${path}`;
   /** @type {Response} */
   let response;
   try {
+    /** @type {Record<string, string>} */
+    const headers = {};
+    if (body !== undefined) headers["Content-Type"] = "application/json";
+    if (token !== undefined) headers.Authorization = `Bearer ${token}`;
     response = await fetch(`${API_URL}${path}`, {
       method,
-      headers: body === undefined ? {} : { "Content-Type": "application/json" },
+      headers,
       body: body === undefined ? undefined : JSON.stringify(body),
     });
   } catch (error) {

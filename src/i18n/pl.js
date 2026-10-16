@@ -7,8 +7,6 @@ export default {
   "home.choosePlayer": "Wybierz gracza",
   "players.title": "Gracze",
   "players.empty": "Nie ma jeszcze żadnego gracza.",
-  "players.add": "Dodaj",
-  "players.namePlaceholder": "Imię",
   "players.bestTime": "Najlepszy czas: {time}",
   "players.noRuns": "Jeszcze nie grano.",
   "players.missed": "Najczęstsze pomyłki:",
@@ -47,4 +45,24 @@ export default {
   "lobby.timedOut":
     "Nie udało się połączyć w ciągu {seconds} sekund. Spróbujcie ponownie albo połączcie oba urządzenia z tą samą siecią Wi-Fi.",
   "lobby.tryAgain": "Spróbuj ponownie z nowym zaproszeniem",
+  "players.new": "Nowy gracz",
+  "players.serverUnreachable":
+    "Nie mogę połączyć się z serwerem gry. Sprawdź połączenie z internetem i spróbuj ponownie.",
+  "home.leaderboard": "🏆 Ranking",
+  "leaderboard.title": "Ranking",
+  "leaderboard.loading": "Wczytuję…",
+  "leaderboard.unreachable":
+    "Nie mogę połączyć się z serwerem gry. Sprawdź połączenie z internetem.",
+  "leaderboard.allTime": "Wszech czasów",
+  "leaderboard.week": "W tym tygodniu",
+  "leaderboard.empty": "Nie ma jeszcze wyników.",
+  "leaderboard.player": "Gracz",
+  "leaderboard.time": "Czas",
+  "leaderboard.wins": "Wygrane",
+  "leaderboard.ask": "Dodać twój wynik do rankingu?",
+  "leaderboard.yes": "Tak",
+  "leaderboard.no": "Nie",
+  "leaderboard.sending": "Wysyłam…",
+  "leaderboard.added": "Dodano!",
+  "leaderboard.failed": "Nie udało się wysłać. Spróbuj ponownie.",
 };

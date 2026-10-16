@@ -7,13 +7,14 @@ import { h } from "../../core/ui/dom.js";
  * @property {string} opponentName
  * @property {(() => void) | null} onPlayAgain Only the host starts a new match; null for the guest.
  * @property {() => void} onHome
+ * @property {HTMLElement | null} prompt The leaderboard prompt, when both players can add it.
  */
 
 /**
  * @param {Translate} t
  * @param {ResultOptions} options
  */
-export function createResultPanel(t, { won, opponentName, onPlayAgain, onHome }) {
+export function createResultPanel(t, { won, opponentName, onPlayAgain, onHome, prompt }) {
   const again =
     onPlayAgain === null
       ? h("p", {}, t("tugOfWar.waitingForHost", { name: opponentName }))
@@ -29,6 +30,7 @@ export function createResultPanel(t, { won, opponentName, onPlayAgain, onHome })
       "div",
       { class: "tw-panel" },
       h("h2", {}, won ? t("tugOfWar.youWon") : t("tugOfWar.theyWon", { name: opponentName })),
+      prompt ?? "",
       again,
       h(
         "button",
