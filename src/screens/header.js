@@ -9,10 +9,7 @@ import { h } from "../core/ui/dom.js";
  */
 export function renderHeader(header, app) {
   const { t, data } = app;
-  const playerName =
-    data.currentPlayerId === null
-      ? t("header.choosePlayer")
-      : data.players[data.currentPlayerId].name;
+  const playerName = data.player === null ? t("header.choosePlayer") : data.player.name;
 
   const languages = h(
     "select",

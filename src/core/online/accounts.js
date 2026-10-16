@@ -17,27 +17,23 @@ export async function registerPlayer() {
 }
 
 /**
- * Gives every player from before nicknames a nickname and an account (R8.2). Stops at the first
- * failure; the rest are tried at the next start.
+ * Gives a player from before nicknames a nickname and an account (R8.2). On failure it is tried
+ * again at the next start.
  * @param {() => AppData} getData
  * @param {(change: (data: AppData) => AppData) => void} update
- * @returns {Promise<boolean>} Whether any player was renamed.
+ * @returns {Promise<boolean>} Whether the player was renamed.
  */
-export async function registerOldPlayers(getData, update) {
-  const waiting = Object.entries(getData().players).filter(([, p]) => p.account === undefined);
-  log.debug("players without an account", waiting.length);
-  let renamed = false;
-  for (const [id, player] of waiting) {
-    try {
-      const { nickname, account } = await registerPlayer();
-      update((data) => setAccount(data, id, nickname, account));
-      log.info(`player ${player.name} is now ${nickname}`);
-      renamed = true;
-    } catch (error) {
-      if (!(error instanceof ServerUnreachableError || error instanceof ApiError)) throw error;
-      log.info("could not give the older players nicknames yet; trying at the next start");
-      break;
-    }
+export async function registerOldPlayer(getData, update) {
+  const { player } = getData();
+  if (player === null || player.account !== undefined) return false;
+  try {
+    const { nickname, account } = await registerPlayer();
+    update((data) => setAccount(data, nickname, account));
+    log.info(`player ${player.name} is now ${nickname}`);
+    return true;
+  } catch (error) {
+    if (!(error instanceof ServerUnreachableError || error instanceof ApiError)) throw error;
+    log.info("could not give the player a nickname yet; trying at the next start");
+    return false;
   }
-  return renamed;
 }

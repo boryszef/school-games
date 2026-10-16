@@ -1,7 +1,7 @@
 import { formatTime } from "../core/format.js";
 import { registerPlayer } from "../core/online/accounts.js";
 import { ApiError, ServerUnreachableError } from "../core/online/api.js";
-import { addPlayer, bestTime, missedFacts, selectPlayer, setAccount } from "../core/profiles.js";
+import { addPlayer, bestTime, missedFacts } from "../core/profiles.js";
 import { listGames } from "../core/registry.js";
 import { h } from "../core/ui/dom.js";
 
@@ -12,46 +12,17 @@ const MISSED_FACTS_SHOWN = 10;
 /** @type {import("../core/app.js").Screen} */
 export function renderPlayers(root, app) {
   const { t, data } = app;
-  const players = Object.entries(data.players);
-
   root.replaceChildren(
     h("h1", {}, t("players.title")),
-    players.length === 0 ? h("p", {}, t("players.empty")) : _playerList(app),
-    _newPlayerButton(app),
-    data.currentPlayerId === null ? "" : _playerStats(app, data.currentPlayerId),
+    ...(data.player === null
+      ? [h("p", {}, t("players.empty")), _newPlayerButton(app)]
+      : [_playerStats(app, data.player.name)]),
   );
   return () => {};
 }
 
-/** @param {App} app */
-function _playerList(app) {
-  const { data } = app;
-  return h(
-    "ul",
-    { class: "player-list" },
-    ...Object.entries(data.players).map(([id, player]) =>
-      h(
-        "li",
-        {},
-        h(
-          "button",
-          {
-            type: "button",
-            class: id === data.currentPlayerId ? "player is-current" : "player",
-            onclick: () => {
-              app.update((d) => selectPlayer(d, id));
-              _playerChosen(app);
-            },
-          },
-          player.name,
-        ),
-      ),
-    ),
-  );
-}
-
 /**
- * The Worker picks the nickname, so creating a player needs internet (R3.1).
+ * A browser has one player (R3.1). The Worker picks the nickname, so creating it needs internet.
  * @param {App} app
  */
 function _newPlayerButton(app) {
@@ -66,11 +37,8 @@ function _newPlayerButton(app) {
     error.textContent = "";
     try {
       const { nickname, account } = await registerPlayer();
-      const id = `p${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
-      app.update((d) =>
-        selectPlayer(setAccount(addPlayer(d, nickname, id), id, nickname, account), id),
-      );
-      _playerChosen(app);
+      app.update((d) => addPlayer(d, nickname, account));
+      _playerCreated(app);
     } catch (caught) {
       if (!(caught instanceof ServerUnreachableError || caught instanceof ApiError)) throw caught;
       error.textContent = app.t("players.serverUnreachable");
@@ -81,10 +49,10 @@ function _newPlayerButton(app) {
 }
 
 /**
- * Goes back to the page that asked for a player, or shows the chosen player's stats.
+ * Goes back to the page that asked for a player, or shows the new player's stats.
  * @param {App} app
  */
-function _playerChosen(app) {
+function _playerCreated(app) {
   const target = app.returnHash;
   app.returnHash = null;
   if (target === null) app.refresh();
@@ -93,17 +61,17 @@ function _playerChosen(app) {
 
 /**
  * @param {App} app
- * @param {string} playerId
+ * @param {string} name
  */
-function _playerStats(app, playerId) {
+function _playerStats(app, name) {
   const { t, data } = app;
   return h(
     "section",
     { class: "player-stats" },
-    h("h2", {}, data.players[playerId].name),
+    h("h2", {}, name),
     ...listGames().map((game) => {
-      const best = bestTime(data, playerId, game.id);
-      const missed = missedFacts(data, playerId, game.id).slice(0, MISSED_FACTS_SHOWN);
+      const best = bestTime(data, game.id);
+      const missed = missedFacts(data, game.id).slice(0, MISSED_FACTS_SHOWN);
       return h(
         "article",
         { class: "game-stats" },

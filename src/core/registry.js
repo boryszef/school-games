@@ -3,7 +3,7 @@
 /** @typedef {Pick<import("./storage.js").Run, "timeMs" | "penaltyMs" | "mistakes">} RunResult */
 /**
  * @typedef {object} GameContext
- * @property {{id: string, name: string, account: import("./storage.js").Account | null}} player
+ * @property {{name: string, account: import("./storage.js").Account | null}} player
  *   `account` is null until the Worker has registered the player (R8.2).
  * @property {Translate} t
  * @property {(result: RunResult) => void} recordRun

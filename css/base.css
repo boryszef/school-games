@@ -167,26 +167,6 @@ select {
   font-size: 3rem;
 }
 
-.player-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  padding: 0;
-  list-style: none;
-}
-
-.player {
-  background: var(--surface);
-  color: var(--text);
-  border: 2px solid var(--border);
-}
-
-.player.is-current {
-  border-color: var(--accent);
-  background: var(--accent);
-  color: var(--accent-text);
-}
-
 .player-new {
   margin: 16px 0;
 }

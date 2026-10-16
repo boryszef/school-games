@@ -4,13 +4,11 @@ import { emptyData } from "../src/core/storage.js";
 import { addPlayer, bestTime, missedFacts, recordRun, setAccount } from "../src/core/profiles.js";
 
 /**
- * @param {string} playerId
  * @param {number} timeMs
  * @param {[number, number][]} [mistakes]
  * @param {string} [gameId]
  */
-const run = (playerId, timeMs, mistakes = [], gameId = "robot-maze") => ({
-  playerId,
+const run = (timeMs, mistakes = [], gameId = "robot-maze") => ({
   gameId,
   finishedAt: "2026-10-14T12:00:00.000Z",
   timeMs,
@@ -18,84 +16,76 @@ const run = (playerId, timeMs, mistakes = [], gameId = "robot-maze") => ({
   mistakes,
 });
 
-function withTwoPlayers() {
-  return addPlayer(addPlayer(emptyData(), "Ala", "a"), "Olek", "o");
-}
+const account = { id: "i".repeat(22), token: "t".repeat(43) };
 
-test("addPlayer stores the player without mutating the input", () => {
+test("addPlayer stores the one player without mutating the input", () => {
   const before = emptyData();
-  const after = addPlayer(before, "Ala", "a");
-  assert.equal(after.players.a.name, "Ala");
-  assert.deepEqual(before.players, {});
+  const after = addPlayer(before, "RedFox1", account);
+  assert.equal(after.player?.name, "RedFox1");
+  assert.deepEqual(after.player?.account, account);
+  assert.equal(before.player, null);
 });
 
 test("setAccount renames the player to the nickname and keeps everything else", () => {
-  const before = recordRun(withTwoPlayers(), run("a", 60000));
-  const account = { id: "i".repeat(22), token: "t".repeat(43) };
-  const after = setAccount(before, "a", "RedFox1", account);
+  const before = recordRun({ ...emptyData(), player: { name: "Ala", createdAt: "x" } }, run(60000));
+  const after = setAccount(before, "RedFox1", account);
 
-  assert.deepEqual(after.players.a, {
-    name: "RedFox1",
-    createdAt: before.players.a.createdAt,
-    account,
-  });
-  assert.deepEqual(after.players.o, before.players.o);
+  assert.deepEqual(after.player, { name: "RedFox1", createdAt: "x", account });
   assert.deepEqual(after.runs, before.runs);
-  assert.equal(before.players.a.name, "Ala");
-  assert.equal(before.players.a.account, undefined);
+  assert.equal(before.player?.name, "Ala");
+  assert.equal(before.player?.account, undefined);
 });
 
 test("recordRun appends the run", () => {
-  const data = recordRun(withTwoPlayers(), run("a", 60000));
+  const data = recordRun(emptyData(), run(60000));
   assert.equal(data.runs.length, 1);
   assert.equal(data.runs[0].timeMs, 60000);
 });
 
-test("bestTime is the minimum time of the player's runs in that game", () => {
-  let data = withTwoPlayers();
-  for (const r of [
-    run("a", 90000),
-    run("a", 70000),
-    run("o", 10000),
-    run("a", 5000, [], "other"),
-  ]) {
+test("bestTime is the minimum time of the runs in that game", () => {
+  let data = emptyData();
+  for (const r of [run(90000), run(70000), run(5000, [], "other")]) {
     data = recordRun(data, r);
   }
-  assert.equal(bestTime(data, "a", "robot-maze"), 70000);
+  assert.equal(bestTime(data, "robot-maze"), 70000);
 });
 
-test("bestTime is null when the player has no runs", () => {
-  assert.equal(bestTime(withTwoPlayers(), "a", "robot-maze"), null);
+test("bestTime is null when the game has no runs", () => {
+  assert.equal(bestTime(emptyData(), "robot-maze"), null);
 });
 
-test("missedFacts ranks the player's mistakes by count", () => {
-  let data = withTwoPlayers();
+test("missedFacts ranks the game's mistakes by count", () => {
+  let data = emptyData();
   data = recordRun(
     data,
-    run("a", 1, [
+    run(1, [
       [7, 8],
       [6, 9],
     ]),
   );
   data = recordRun(
     data,
-    run("a", 1, [
+    run(1, [
       [7, 8],
       [3, 4],
     ]),
   );
-  data = recordRun(data, run("a", 1, [[7, 8]]));
+  data = recordRun(data, run(1, [[7, 8]]));
   data = recordRun(
     data,
-    run("o", 1, [
-      [3, 4],
-      [3, 4],
-      [3, 4],
-      [3, 4],
-    ]),
+    run(
+      1,
+      [
+        [3, 4],
+        [3, 4],
+        [3, 4],
+        [3, 4],
+      ],
+      "other",
+    ),
   );
 
-  const facts = missedFacts(data, "a", "robot-maze");
+  const facts = missedFacts(data, "robot-maze");
   assert.deepEqual(facts[0], { row: 7, col: 8, count: 3 });
   assert.deepEqual(
     facts.slice(1).map((f) => f.count),
@@ -104,7 +94,7 @@ test("missedFacts ranks the player's mistakes by count", () => {
   assert.equal(facts.length, 3);
 });
 
-test("missedFacts is empty for a player without mistakes", () => {
-  const data = recordRun(withTwoPlayers(), run("a", 1));
-  assert.deepEqual(missedFacts(data, "a", "robot-maze"), []);
+test("missedFacts is empty without mistakes", () => {
+  const data = recordRun(emptyData(), run(1));
+  assert.deepEqual(missedFacts(data, "robot-maze"), []);
 });

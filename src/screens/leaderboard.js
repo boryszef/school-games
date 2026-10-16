@@ -39,8 +39,7 @@ export function renderLeaderboard(root, app) {
  */
 function _sections(app, board) {
   const { t } = app;
-  const me =
-    app.data.currentPlayerId === null ? null : app.data.players[app.data.currentPlayerId].name;
+  const me = app.data.player?.name ?? null;
   /** @param {MazeEntry} entry */
   const time = (entry) => formatTime(entry.timeMs);
   /** @param {DuelEntry} entry */

@@ -4,36 +4,26 @@
 /** @typedef {{row: number, col: number, count: number}} MissedFact */
 
 /**
+ * Creates the browser's one player with the nickname and account the Worker registered.
  * @param {AppData} data
- * @param {string} name
- * @param {string} id
- * @returns {AppData}
- */
-export function addPlayer(data, name, id) {
-  const player = { name, createdAt: new Date().toISOString() };
-  return { ...data, players: { ...data.players, [id]: player } };
-}
-
-/**
- * Gives the player the nickname and account the Worker registered.
- * @param {AppData} data
- * @param {string} id
  * @param {string} nickname
  * @param {Account} account
  * @returns {AppData}
  */
-export function setAccount(data, id, nickname, account) {
-  const player = { ...data.players[id], name: nickname, account };
-  return { ...data, players: { ...data.players, [id]: player } };
+export function addPlayer(data, nickname, account) {
+  return { ...data, player: { name: nickname, createdAt: new Date().toISOString(), account } };
 }
 
 /**
+ * Gives an existing player the nickname and account the Worker registered.
  * @param {AppData} data
- * @param {string} id
+ * @param {string} nickname
+ * @param {Account} account
  * @returns {AppData}
  */
-export function selectPlayer(data, id) {
-  return { ...data, currentPlayerId: id };
+export function setAccount(data, nickname, account) {
+  if (data.player === null) throw new Error("there is no player to give an account");
+  return { ...data, player: { ...data.player, name: nickname, account } };
 }
 
 /**
@@ -47,26 +37,24 @@ export function recordRun(data, run) {
 
 /**
  * @param {AppData} data
- * @param {string} playerId
  * @param {string} gameId
  * @returns {number | null}
  */
-export function bestTime(data, playerId, gameId) {
-  const times = _runsOf(data, playerId, gameId).map((run) => run.timeMs);
+export function bestTime(data, gameId) {
+  const times = _runsOf(data, gameId).map((run) => run.timeMs);
   return times.length > 0 ? Math.min(...times) : null;
 }
 
 /**
  * Wrongly answered `[row, col]` pairs, most frequent first.
  * @param {AppData} data
- * @param {string} playerId
  * @param {string} gameId
  * @returns {MissedFact[]}
  */
-export function missedFacts(data, playerId, gameId) {
+export function missedFacts(data, gameId) {
   /** @type {Map<string, MissedFact>} */
   const facts = new Map();
-  for (const [row, col] of _runsOf(data, playerId, gameId).flatMap((run) => run.mistakes)) {
+  for (const [row, col] of _runsOf(data, gameId).flatMap((run) => run.mistakes)) {
     const key = `${row},${col}`;
     const fact = facts.get(key) ?? { row, col, count: 0 };
     facts.set(key, { ...fact, count: fact.count + 1 });
@@ -76,9 +64,8 @@ export function missedFacts(data, playerId, gameId) {
 
 /**
  * @param {AppData} data
- * @param {string} playerId
  * @param {string} gameId
  */
-function _runsOf(data, playerId, gameId) {
-  return data.runs.filter((run) => run.playerId === playerId && run.gameId === gameId);
+function _runsOf(data, gameId) {
+  return data.runs.filter((run) => run.gameId === gameId);
 }

@@ -5,7 +5,7 @@ import { h } from "../core/ui/dom.js";
 export function renderHome(root, app) {
   const { t, data } = app;
   const notice =
-    data.currentPlayerId === null
+    data.player === null
       ? h(
           "p",
           { class: "notice" },

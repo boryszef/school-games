@@ -2,7 +2,7 @@ import { log } from "./log.js";
 import { translate } from "./i18n.js";
 import { listGames } from "./registry.js";
 import { parseRoute } from "./router.js";
-import { registerOldPlayers } from "./online/accounts.js";
+import { registerOldPlayer } from "./online/accounts.js";
 import { loadData, saveData } from "./storage.js";
 import corePl from "../i18n/pl.js";
 import coreEn from "../i18n/en.js";
@@ -24,7 +24,7 @@ import { renderNotFound } from "../screens/not-found.js";
  * @property {(change: (data: AppData) => AppData) => void} update Applies and persists a change.
  * @property {(hash: string) => void} navigate
  * @property {() => void} refresh Re-renders the header and the current screen.
- * @property {string | null} returnHash Where to go once a player is chosen, e.g. an invitation
+ * @property {string | null} returnHash Where to go once the player is created, e.g. an invitation
  *   link opened before choosing one.
  */
 /** @typedef {(root: HTMLElement, app: App, route: Route) => () => void} Screen Returns unmount. */
@@ -77,7 +77,7 @@ export function startApp(header, main) {
   window.addEventListener("hashchange", render);
   render();
   // Re-rendering a running game would restart it; it picks up the nickname next time.
-  registerOldPlayers(() => data, app.update).then((renamed) => {
+  registerOldPlayer(() => data, app.update).then((renamed) => {
     if (renamed && parseRoute(location.hash).name !== "game") render();
   });
 }

@@ -8,7 +8,7 @@ Education games is a static web app (HTML, CSS and ES-module JavaScript with no 
 
 - R1.1 The app is static files only, with one exception: the small Cloudflare Worker in `worker/` (free tier, R6), which accepts requests only from the app's own origins. Nothing is fetched from a CDN or installed from npm at runtime. Third-party code is allowed only as a vendored, licence-compatible file under `src/vendor/` with its source and licence noted in a header. It must be served over HTTP(S) because it uses ES modules.
 - R1.2 Hash routing: `#/` home (list of games), `#/players` (profiles), `#/leaderboard` (R8), `#/game/<id>` (a game) and `#/game/<id>/<arg>`, where `<arg>` is the rest of the hash, passed to the game.
-- R1.3 A game is a module that registers a `GameDefinition` (`id`, `titleKey`, `icon`, `messages: {pl, en}`, `mount(root, ctx) → unmount`). The `GameContext` passed to `mount` provides `player`, `t`, `recordRun(result)`, `exit()` and `arg` (the route's `<arg>`, or `null`). Adding a game means adding a folder under `src/games/` and one registration line.
+- R1.3 A game is a module that registers a `GameDefinition` (`id`, `titleKey`, `icon`, `messages: {pl, en}`, `mount(root, ctx) → unmount`). The `GameContext` passed to `mount` provides `player` (`{name, account}`), `t`, `recordRun(result)`, `exit()` and `arg` (the route's `<arg>`, or `null`). Adding a game means adding a folder under `src/games/` and one registration line.
 - R1.4 The on-screen number pad and direction pad are reusable core UI components.
 - R1.5 Logging goes through a small logger. Debug output is enabled with `?debug=1`.
 
@@ -19,12 +19,12 @@ Education games is a static web app (HTML, CSS and ES-module JavaScript with no 
 
 ## R3 – Players and persistence
 
-- R3.1 A player is created with the **New player** button and gets a nickname from the Worker (R8.1). There is no name input. Creating a player needs internet; if the Worker can't be reached, "Can't reach the game server" is shown and the button can be pressed again. A player can be selected. A game can only be started with a selected player. If a game link is opened without one, the app asks for a player and then returns to that link.
-- R3.2 All state lives in `localStorage` under a single key `schoolGames` as `{version: 1, data}`.
-- R3.3 `data` holds `lang`, `currentPlayerId`, `players` and `runs`. A player is `{name, createdAt, account?}`, where `name` is the nickname and `account` is `{id, token}` from the Worker. A run is `{playerId, gameId, finishedAt, timeMs, penaltyMs, mistakes}`, where `timeMs` includes the penalties and `mistakes` is a list of `[row, col]` pairs.
-- R3.4 The best time per player and game is the minimum `timeMs` of their runs.
-- R3.5 The most-missed products per player and game are the `[row, col]` pairs from their runs' `mistakes`, ranked by count (most frequent first). They are only displayed and don't affect gameplay.
-- R3.6 Data with an unknown `version` is an error. It is not silently discarded.
+- R3.1 A browser keeps exactly one player. It is created once with the **New player** button and gets a nickname from the Worker (R8.1). There is no name input, and once the player exists the button is gone, so there is no adding or switching players. Creating the player needs internet; if the Worker can't be reached, "Can't reach the game server" is shown and the button can be pressed again. A game can only be started once the player exists. If a game link is opened before that, the app asks to create the player and then returns to that link.
+- R3.2 All state lives in `localStorage` under a single key `schoolGames` as `{version: 2, data}`.
+- R3.3 `data` holds `lang`, `player` (`null` until it is created) and `runs`. The player is `{name, createdAt, account?}`, where `name` is the nickname and `account` is `{id, token}` from the Worker. A run is `{gameId, finishedAt, timeMs, penaltyMs, mistakes}`, where `timeMs` includes the penalties and `mistakes` is a list of `[row, col]` pairs.
+- R3.4 The best time per game is the minimum `timeMs` of the player's runs in that game.
+- R3.5 The most-missed products per game are the `[row, col]` pairs from the `mistakes` of the player's runs in that game, ranked by count (most frequent first). They are only displayed and don't affect gameplay.
+- R3.6 Version 1 data, which could hold several players, is migrated when loaded: the selected player (or, with none selected, the first one) and their runs are kept, and the other players and their runs are dropped. Data with any other unknown `version` is an error. It is not silently discarded.
 
 ## R4 – Robot Maze rules
 
@@ -82,7 +82,7 @@ Education games is a static web app (HTML, CSS and ES-module JavaScript with no 
 ## R8 – Leaderboard
 
 - R8.1 **Nicknames.** `POST /players` creates a player with a nickname `<Color><Animal><N>`, such as `RedFox1`. The Worker picks the color and animal at random from fixed English lists (`src/core/online/nickname.js`). `N` is the next free number for that color and animal, so nicknames are unique. The response also gives a public id and a secret token. Creating players is limited to 10 a minute per IP.
-- R8.2 **Existing players.** At app start, every player without an account is registered and renamed to its new nickname. Runs and stats stay. If the Worker can't be reached, this is tried again at the next start, and until then the player can't add scores.
+- R8.2 **Existing players.** At app start, a player without an account is registered and renamed to its new nickname. Runs and stats stay. If the Worker can't be reached, this is tried again at the next start, and until then the player can't add scores.
 - R8.3 **Prompt.** When a game ends, a player with an account is asked "Add your score to the leaderboard?" with **Yes** and **No**. Nothing is sent without **Yes**.
 - R8.4 **Robot Maze times.**
   - With an account, a round starts with `POST /maze-runs`, which returns a run id and the maze seed, and the server notes the start time. The maze is built from that seed, and the player's moves and answers are recorded.

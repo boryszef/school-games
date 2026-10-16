@@ -44,7 +44,7 @@ src/core/
   ui/dpad.js               reusable on-screen direction pad
 src/i18n/pl.js, en.js      core strings
 src/screens/home.js        game tiles from the registry
-src/screens/players.js     choose or create a player; best time, last runs, most-missed products
+src/screens/players.js     create the one player; best time, last runs, most-missed products
 src/screens/header.js, game.js, not-found.js
 src/core/app.js            app state, persistence, dictionaries, screen dispatch
 src/core/format.js         m:ss.t time formatting
@@ -87,12 +87,14 @@ A future game is a new folder under `src/games/` plus one `registerGame(...)` li
 ## Persistence (`storage.js`, `profiles.js`)
 
 ```js
-{ version: 1, data: {
-  lang: "pl", currentPlayerId,
-  players: { [id]: { name, createdAt } },
-  runs: [ { playerId, gameId, finishedAt, timeMs, penaltyMs, mistakes: [[r,c], ...] } ]
+{ version: 2, data: {
+  lang: "pl",
+  player: { name, createdAt, account } | null,
+  runs: [ { gameId, finishedAt, timeMs, penaltyMs, mistakes: [[r,c], ...] } ]
 }}
 ```
+
+- A browser keeps one player. Version 1 held several; loading it keeps the selected player (or the first one) and their runs.
 
 - The best time and the most-missed products are derived from `runs`. They aren't stored separately, so there is no denormalised state to keep in sync.
 - Storage is written after every finished run and after profile or language changes.
