@@ -98,4 +98,5 @@ Education games is a static web app (HTML, CSS and ES-module JavaScript with no 
   - Robot Maze: each player's best time, fastest first.
   - Tug of War: number of wins, most first.
   - The current player's row is highlighted.
+  - The list is never cached, so a score shows as soon as it has been added.
 - R8.7 **Privacy.** No real names are stored: nicknames are generated. The Worker stores no IP addresses, and keeps only a hash of each token. The token is sent only to the Worker and never to the other player; the other player sees only the public id.

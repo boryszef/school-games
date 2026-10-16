@@ -41,7 +41,7 @@ Migration `0002_leaderboard.sql` adds four tables:
 | `POST /maze-runs` (auth)                          | 201 `{runId, seed}`.                                                                                                                                                                          |
 | `POST /maze-runs/:id/finish` (auth) `{actions}`   | 200 `{timeMs, penaltyMs}`. 422 if the replay doesn't reach the exit, 409 if the run was already finished, 404 if the run is unknown, another player's or older than 1 h, 400 for bad actions. |
 | `POST /duels` (auth) `{matchId, opponentId, won}` | 202. 409 for a second report on the same match, 404 for an unknown opponent, 400 for a bad body.                                                                                              |
-| `GET /leaderboard`                                | `{maze: {allTime, week}, duels: {allTime, week}}`, each a top 10. Cached for 60 s.                                                                                                            |
+| `GET /leaderboard`                                | `{maze: {allTime, week}, duels: {allTime, week}}`, each a top 10. Never cached (`no-store`), so a new record shows at once.                                                                   |
 
 - **Authentication:** `Authorization: Bearer <token>`. The token is 32 random bytes, and only its SHA-256 hash is stored. A missing or wrong token gets 401.
 - **Ids:** player and run ids are 16 random bytes in base64url (22 characters). A match id is 12 base64url characters, made by the host.

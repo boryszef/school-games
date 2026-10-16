@@ -5,7 +5,8 @@ import { formatNickname } from "../../src/core/online/nickname.js";
 
 const TOP = 10;
 const DAY_MS = 24 * 60 * 60 * 1000;
-const CACHE_CONTROL = "public, max-age=60";
+/** Always fresh: a cached copy would hide a record the player has just added. */
+const CACHE_CONTROL = "no-store";
 
 /**
  * The top 10 of each game, all-time and since Monday 00:00 UTC.

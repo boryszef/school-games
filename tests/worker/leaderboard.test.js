@@ -48,11 +48,12 @@ function helpers(worker) {
   return { playMaze, duel, board };
 }
 
-test("an empty leaderboard has four empty lists and is cached for a minute", async () => {
+test("an empty leaderboard has four empty lists and is never cached", async () => {
   const worker = workerSetup();
   const response = await worker.call("GET", "/leaderboard");
   assert.equal(response.status, 200);
-  assert.equal(response.headers.get("Cache-Control"), "public, max-age=60");
+  // A cached copy hid a new record right after it was added.
+  assert.equal(response.headers.get("Cache-Control"), "no-store");
   assert.deepEqual(await response.json(), {
     maze: { allTime: [], week: [] },
     duels: { allTime: [], week: [] },
