@@ -25,6 +25,8 @@
 }
 
 .rm-board {
+  /* One cell's width: the stage (main's 16px gutters on a phone) split over the axis + size. */
+  --cell: calc(min(100vw - 32px, 560px) / (var(--size) + 1));
   display: grid;
   grid-template-columns: repeat(calc(var(--size) + 1), 1fr);
   user-select: none;
@@ -47,7 +49,8 @@
   aspect-ratio: 1;
   background: var(--surface);
   border: 2px solid transparent;
-  font-size: clamp(0.9rem, 4vw, 1.6rem);
+  /* The size cap only matters on the 20×20 board; the 10×10 one keeps the clamp. */
+  font-size: min(clamp(0.9rem, 4vw, 1.6rem), calc(var(--cell) * 0.6));
   cursor: pointer;
 }
 
@@ -66,7 +69,8 @@
 
 .rm-cell.is-disabled-robot {
   color: var(--muted);
-  font-size: 0.9em;
+  /* Three digits (up to 400) must fit inside the cell's borders. */
+  font-size: min(0.9em, calc((var(--cell) - 4px) / 1.75));
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }

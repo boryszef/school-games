@@ -70,7 +70,7 @@ export function createApp(deps) {
       method: "POST",
       path: /^\/maze-runs$/,
       player: true,
-      handler: ({ playerId }) => mazeRuns.start(playerId),
+      handler: async ({ request, playerId }) => mazeRuns.start(playerId, await readObject(request)),
     },
     {
       method: "POST",

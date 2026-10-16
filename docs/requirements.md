@@ -38,6 +38,7 @@ Education games is a static web app (HTML, CSS and ES-module JavaScript with no 
 - R4.8 Answers are typed on the keyboard (`inputmode="numeric"`) or with the on-screen number pad.
 - R4.9 The timer starts when the maze appears and stops when the player reaches the exit. The displayed time includes penalties.
 - R4.10 The result screen shows the total time, the number of mistakes and whether it is a new personal best. It offers "Play again" and "Home".
+- R4.11 **Robot Maze – hard** is a separate game (`robot-maze-hard`, its own home tile, stats and rankings) with the same rules on a 20×20 maze with 20 robots. Rows and columns are numbered 1–20, so the questions go up to 20 × 20 = 400. R4.1–R4.3 describe the standard level; the hard level only changes the size and the number of robots.
 
 ## R5 – Quality
 
@@ -85,9 +86,9 @@ Education games is a static web app (HTML, CSS and ES-module JavaScript with no 
 - R8.2 **Existing players.** At app start, a player without an account is registered and renamed to its new nickname. Runs and stats stay. If the Worker can't be reached, this is tried again at the next start, and until then the player can't add scores.
 - R8.3 **Prompt.** When a game ends, a player with an account is asked "Add your score to the leaderboard?" with **Yes** and **No**. Nothing is sent without **Yes**.
 - R8.4 **Robot Maze times.**
-  - With an account, a round starts with `POST /maze-runs`, which returns a run id and the maze seed, and the server notes the start time. The maze is built from that seed, and the player's moves and answers are recorded.
-  - On **Yes**, they are sent to `POST /maze-runs/:id/finish`. The Worker replays them with the game's own rules, and the run counts only if the replay reaches the exit. The leaderboard time is the server's elapsed time plus 5 s per wrong answer, and the result card shows it.
-  - Each run can be finished once, within 1 hour, and only by its own player. At most 2000 actions are accepted.
+  - With an account, a round starts with `POST /maze-runs` and the body `{level}`, where `level` is `standard` or `hard`. It returns a run id and the maze seed, and the server notes the start time. The maze is built from that seed, and the player's moves and answers are recorded.
+  - On **Yes**, they are sent to `POST /maze-runs/:id/finish`. The Worker replays them with the game's own rules for the run's level, and the run counts only if the replay reaches the exit. The leaderboard time is the server's elapsed time plus 5 s per wrong answer, and the result card shows it.
+  - Each run can be finished once, within 1 hour, and only by its own player. At most 2000 actions are accepted on the standard level and 8000 on the hard one.
   - If the Worker can't be reached at the start, the round is played locally and no prompt is shown.
 - R8.5 **Tug of War wins.**
   - Both players are asked. On **Yes**, each sends `{matchId, opponentId, won}`.
@@ -95,7 +96,7 @@ Education games is a static web app (HTML, CSS and ES-module JavaScript with no 
   - At most 3 wins per winner and opponent count per UTC day.
   - The prompt appears only when both players have an account.
 - R8.6 **Rankings.** `#/leaderboard`, linked from the header (🏆) on every screen, shows, for each game, the top 10 all-time and the top 10 this week (since Monday 00:00 UTC):
-  - Robot Maze: each player's best time, fastest first.
+  - Robot Maze and Robot Maze – hard, each with its own lists: each player's best time, fastest first.
   - Tug of War: number of wins, most first.
   - The current player's row is highlighted.
   - The list is never cached, so a score shows as soon as it has been added.

@@ -12,12 +12,13 @@ import { messages } from "./i18n.js";
 import { DIRECTIONS, stepFrom } from "./maze.js";
 import { positionKey } from "./path.js";
 import { createResultPanel } from "./result.js";
-import { STANDARD_GAME, answer, createGame, move } from "./state.js";
+import { LEVELS, answer, createGame, move } from "./state.js";
 
 /** @typedef {import("../../core/registry.js").GameContext} GameContext */
 /** @typedef {import("./maze.js").Direction} Direction */
 /** @typedef {import("./maze.js").Position} Position */
 /** @typedef {import("./state.js").GameState} GameState */
+/** @typedef {import("./state.js").Level} Level */
 /** @typedef {import("../../core/storage.js").Account} Account */
 /** @typedef {Direction | {answer: number}} Action */
 /**
@@ -39,37 +40,58 @@ const KEY_DIRECTIONS = {
   d: "right",
 };
 
-/** @type {import("../../core/registry.js").GameDefinition} */
-export const robotMaze = {
+export const robotMaze = _robotMaze({
   id: "robot-maze",
   titleKey: "robotMaze.title",
   icon: "🤖",
-  messages,
-  mount(root, ctx) {
-    loadStylesheet(new URL("./style.css", import.meta.url).href);
-    let stopRound = () => {};
-    const restart = () => {
-      stopRound();
-      stopRound = _startRound(root, ctx, restart);
-    };
-    restart();
-    return () => stopRound();
-  },
-};
+  level: "standard",
+});
+
+/** The same game on a 20×20 maze; it has its own stats and rankings (R4.11). */
+export const robotMazeHard = _robotMaze({
+  id: "robot-maze-hard",
+  titleKey: "robotMaze.hardTitle",
+  icon: "🦾",
+  level: "hard",
+});
+
+/**
+ * @param {{id: string, titleKey: string, icon: string, level: Level}} options
+ * @returns {import("../../core/registry.js").GameDefinition}
+ */
+function _robotMaze({ id, titleKey, icon, level }) {
+  return {
+    id,
+    titleKey,
+    icon,
+    messages,
+    mount(root, ctx) {
+      loadStylesheet(new URL("./style.css", import.meta.url).href);
+      let stopRound = () => {};
+      const restart = () => {
+        stopRound();
+        stopRound = _startRound(root, ctx, level, restart);
+      };
+      restart();
+      return () => stopRound();
+    },
+  };
+}
 
 /**
  * Gets a server-timed run for a registered player, then plays the maze; returns a cleanup
  * function.
  * @param {HTMLElement} root
  * @param {GameContext} ctx
+ * @param {Level} level
  * @param {() => void} restart
  */
-function _startRound(root, ctx, restart) {
+function _startRound(root, ctx, level, restart) {
   let cancelled = false;
   let stopRound = () => {};
   root.replaceChildren(h("p", { class: "rm-preparing" }, ctx.t("robotMaze.preparing")));
-  _serverRun(ctx.player.account).then((run) => {
-    if (!cancelled) stopRound = _playRound(root, ctx, restart, run);
+  _serverRun(ctx.player.account, level).then((run) => {
+    if (!cancelled) stopRound = _playRound(root, ctx, level, restart, run);
   });
   return () => {
     cancelled = true;
@@ -79,13 +101,18 @@ function _startRound(root, ctx, restart) {
 
 /**
  * @param {Account | null} account
+ * @param {Level} level
  * @returns {Promise<ServerRun | null>} Null without an account or when the Worker can't be
  *   reached; the round is then played locally and can't be added to the leaderboard.
  */
-async function _serverRun(account) {
+async function _serverRun(account, level) {
   if (account === null) return null;
   try {
-    const { data } = await callApi("POST", "/maze-runs", { token: account.token, expect: [201] });
+    const { data } = await callApi("POST", "/maze-runs", {
+      token: account.token,
+      body: { level },
+      expect: [201],
+    });
     log.debug("server-timed run", data.runId);
     return { runId: data.runId, seed: data.seed, token: account.token };
   } catch (error) {
@@ -99,13 +126,14 @@ async function _serverRun(account) {
  * Plays one maze; returns a cleanup function.
  * @param {HTMLElement} root
  * @param {GameContext} ctx
+ * @param {Level} level
  * @param {() => void} restart
  * @param {ServerRun | null} run
  */
-function _playRound(root, ctx, restart, run) {
+function _playRound(root, ctx, level, restart, run) {
   const { t } = ctx;
   let state = createGame({
-    ...STANDARD_GAME,
+    ...LEVELS[level],
     rng: run === null ? Math.random : createRng(run.seed),
   });
   /** Only actions that changed the game; the ignored ones replay as nothing anyway. */
@@ -177,7 +205,7 @@ function _playRound(root, ctx, restart, run) {
     clock.textContent = formatTime(timeMs);
     const previousBestMs = ctx.bestTimeMs();
     ctx.recordRun({ timeMs, penaltyMs: state.penaltyMs, mistakes: state.mistakes });
-    log.info(`robot-maze finished in ${timeMs} ms with ${state.mistakes.length} mistakes`);
+    log.info(`${level} robot maze finished in ${timeMs} ms with ${state.mistakes.length} mistakes`);
     stage.append(
       createResultPanel(
         t,

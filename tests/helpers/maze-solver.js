@@ -2,18 +2,19 @@ import assert from "node:assert/strict";
 import { createRng } from "../../src/core/random.js";
 import { DIRECTIONS, stepFrom } from "../../src/games/robot-maze/maze.js";
 import { findPath } from "../../src/games/robot-maze/path.js";
-import { answer, createGame, move } from "../../src/games/robot-maze/state.js";
+import { LEVELS, answer, createGame, move } from "../../src/games/robot-maze/state.js";
 
 /** @typedef {import("../../src/games/robot-maze/maze.js").Direction | {answer: number}} Action */
 
 /**
  * The actions of an honest Robot Maze run on the shortest path, as the browser records them.
  * @param {number} seed
- * @param {{wrongAnswers?: number}} [options] How many robots first get a wrong answer.
+ * @param {{wrongAnswers?: number, level?: keyof typeof LEVELS}} [options] `wrongAnswers`: how many
+ *   robots first get a wrong answer.
  * @returns {Action[]}
  */
-export function solveActions(seed, { wrongAnswers = 0 } = {}) {
-  let state = createGame({ size: 10, robotCount: 10, rng: createRng(seed) });
+export function solveActions(seed, { wrongAnswers = 0, level = "standard" } = {}) {
+  let state = createGame({ ...LEVELS[level], rng: createRng(seed) });
   /** @type {Action[]} */
   const actions = [];
   let wrongLeft = wrongAnswers;

@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { createRng } from "../src/core/random.js";
 import { DIRECTIONS, canMove, stepFrom } from "../src/games/robot-maze/maze.js";
 import { findPath } from "../src/games/robot-maze/path.js";
-import { PENALTY_MS, answer, createGame, move } from "../src/games/robot-maze/state.js";
+import { LEVELS, PENALTY_MS, answer, createGame, move } from "../src/games/robot-maze/state.js";
 
 /** @typedef {import("../src/games/robot-maze/state.js").GameState} GameState */
 /** @typedef {import("../src/games/robot-maze/maze.js").Position} Position */
@@ -113,4 +113,30 @@ test("solving every robot on the path and reaching the exit finishes the game", 
 test("the same seed always gives the same game, which the server's replay relies on", () => {
   assert.deepEqual(newGame(123456789), newGame(123456789));
   assert.notDeepEqual(newGame(1).robots, newGame(2).robots);
+});
+
+test("the hard level is a 20×20 maze with 20 robots on the path to the far corner", () => {
+  const state = createGame({ ...LEVELS.hard, rng: createRng(7) });
+  assert.equal(state.maze.size, 20);
+  assert.deepEqual(state.exit, { row: 20, col: 20 });
+  assert.equal(state.robots.length, 20);
+  const path = findPath(state.maze, state.player, state.exit).map((p) => `${p.row},${p.col}`);
+  assert.ok(state.robots.every((r) => path.includes(`${r.row},${r.col}`)));
+});
+
+test("the standard level is still a 10×10 maze with 10 robots", () => {
+  assert.deepEqual(LEVELS.standard, { size: 10, robotCount: 10 });
+});
+
+test("questions above the 10×10 table are checked like any other", () => {
+  const game = createGame({ ...LEVELS.hard, rng: createRng(7) });
+  const robot = { row: 17, col: 19 };
+  const state = { ...game, robots: [{ ...robot, active: true }], challenge: robot };
+
+  const wrong = answer(state, 313);
+  assert.equal(wrong.penaltyMs, PENALTY_MS);
+  assert.deepEqual(wrong.mistakes, [[17, 19]]);
+  const right = answer(state, 323);
+  assert.equal(right.challenge, null);
+  assert.deepEqual(right.player, robot);
 });

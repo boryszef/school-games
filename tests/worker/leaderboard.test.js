@@ -16,14 +16,18 @@ function helpers(worker) {
    * Plays an honest maze run that takes `ms` on the server's clock.
    * @param {TestPlayer} player
    * @param {number} ms
+   * @param {"standard" | "hard"} [level]
    */
-  const playMaze = async (player, ms) => {
-    const started = await worker.call("POST", "/maze-runs", { token: player.token });
+  const playMaze = async (player, ms, level = "standard") => {
+    const started = await worker.call("POST", "/maze-runs", {
+      token: player.token,
+      body: { level },
+    });
     const { runId, seed } = await started.json();
     worker.advance(ms);
     const finished = await worker.call("POST", `/maze-runs/${runId}/finish`, {
       token: player.token,
-      body: { actions: solveActions(seed) },
+      body: { actions: solveActions(seed, { level }) },
     });
     assert.equal(finished.status, 200);
   };
@@ -48,7 +52,7 @@ function helpers(worker) {
   return { playMaze, duel, board };
 }
 
-test("an empty leaderboard has four empty lists and is never cached", async () => {
+test("an empty leaderboard has six empty lists and is never cached", async () => {
   const worker = workerSetup();
   const response = await worker.call("GET", "/leaderboard");
   assert.equal(response.status, 200);
@@ -56,8 +60,22 @@ test("an empty leaderboard has four empty lists and is never cached", async () =
   assert.equal(response.headers.get("Cache-Control"), "no-store");
   assert.deepEqual(await response.json(), {
     maze: { allTime: [], week: [] },
+    mazeHard: { allTime: [], week: [] },
     duels: { allTime: [], week: [] },
   });
+});
+
+test("standard and hard maze times are ranked separately", async () => {
+  const worker = workerSetup();
+  const { playMaze, board } = helpers(worker);
+  const [ala, ola] = [await worker.newPlayer(), await worker.newPlayer()];
+  await playMaze(ala, 60_000);
+  await playMaze(ola, 300_000, "hard");
+
+  const { maze, mazeHard } = await board();
+  assert.deepEqual(maze.allTime, [{ nickname: ala.nickname, timeMs: 60_000 }]);
+  assert.deepEqual(mazeHard.allTime, [{ nickname: ola.nickname, timeMs: 300_000 }]);
+  assert.deepEqual(mazeHard.week, mazeHard.allTime);
 });
 
 test("the maze list shows each player's best time, fastest first", async () => {

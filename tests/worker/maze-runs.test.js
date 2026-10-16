@@ -5,10 +5,16 @@ import { workerSetup } from "../helpers/worker.js";
 
 const HOUR_MS = 60 * 60 * 1000;
 
-/** @param {ReturnType<typeof workerSetup>} worker */
-async function startRun(worker) {
+/**
+ * @param {ReturnType<typeof workerSetup>} worker
+ * @param {"standard" | "hard"} [level]
+ */
+async function startRun(worker, level = "standard") {
   const player = await worker.newPlayer();
-  const response = await worker.call("POST", "/maze-runs", { token: player.token });
+  const response = await worker.call("POST", "/maze-runs", {
+    token: player.token,
+    body: { level },
+  });
   assert.equal(response.status, 201);
   /** @type {{runId: string, seed: number}} */
   const run = await response.json();
@@ -96,4 +102,40 @@ test("actions must be directions or whole-number answers", async () => {
   for (const actions of invalid) {
     assert.equal((await finish(actions)).status, 400, JSON.stringify(actions));
   }
+});
+
+test("a run starts only with a known level", async () => {
+  const worker = workerSetup();
+  const player = await worker.newPlayer();
+  for (const body of [undefined, {}, { level: "easy" }, { level: 1 }, { level: "hard", x: 1 }]) {
+    const response = await worker.call("POST", "/maze-runs", { token: player.token, body });
+    assert.equal(response.status, 400, JSON.stringify(body));
+  }
+});
+
+test("a hard run is replayed on the 20×20 maze", async () => {
+  const worker = workerSetup();
+  const { run, finish } = await startRun(worker, "hard");
+  worker.advance(300_000);
+  const response = await finish(solveActions(run.seed, { level: "hard", wrongAnswers: 1 }));
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), { timeMs: 305_000, penaltyMs: 5000 });
+});
+
+test("a run only counts when solved on its own level", async () => {
+  const worker = workerSetup();
+  const hard = await startRun(worker, "hard");
+  assert.equal((await hard.finish(solveActions(hard.run.seed))).status, 422);
+  const standard = await startRun(worker);
+  const asHard = solveActions(standard.run.seed, { level: "hard" });
+  assert.notEqual((await standard.finish(asHard)).status, 200);
+});
+
+test("a hard run accepts up to 8000 actions", async () => {
+  const worker = workerSetup();
+  const { run, finish } = await startRun(worker, "hard");
+  const honest = solveActions(run.seed, { level: "hard" });
+  const padded = [...Array(8000 - honest.length).fill("up"), ...honest];
+  assert.equal((await finish([...padded, "up"])).status, 400);
+  assert.equal((await finish(padded)).status, 200);
 });

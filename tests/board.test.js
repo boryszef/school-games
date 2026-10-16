@@ -5,7 +5,7 @@ import { createRng } from "../src/core/random.js";
 import { createBoard } from "../src/games/robot-maze/board.js";
 import { DIRECTIONS, stepFrom } from "../src/games/robot-maze/maze.js";
 import { findPath, positionKey } from "../src/games/robot-maze/path.js";
-import { STANDARD_GAME, answer, createGame, move } from "../src/games/robot-maze/state.js";
+import { LEVELS, answer, createGame, move } from "../src/games/robot-maze/state.js";
 
 /** @typedef {import("../src/games/robot-maze/state.js").GameState} GameState */
 /** @typedef {import("../src/games/robot-maze/maze.js").Position} Position */
@@ -19,7 +19,7 @@ beforeEach(() => {
  * @param {number} robotsToBeat
  */
 function playUntilBeaten(robotsToBeat) {
-  let state = createGame({ ...STANDARD_GAME, rng: createRng(21) });
+  let state = createGame({ ...LEVELS.standard, rng: createRng(21) });
   /** @type {Position[]} */
   const beaten = [];
   for (const cell of findPath(state.maze, state.player, state.exit).slice(1)) {

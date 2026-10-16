@@ -1,6 +1,6 @@
 import { createRng } from "../../src/core/random.js";
 import { DIRECTIONS } from "../../src/games/robot-maze/maze.js";
-import { STANDARD_GAME, answer, createGame, move } from "../../src/games/robot-maze/state.js";
+import { LEVELS, answer, createGame, move } from "../../src/games/robot-maze/state.js";
 import { BadRequestError, hasExactly, isPlainObject } from "./http.js";
 import { randomId } from "./ids.js";
 
@@ -8,9 +8,11 @@ import { randomId } from "./ids.js";
 /** @typedef {import("./http.js").Reply} Reply */
 /** @typedef {import("../../src/games/robot-maze/maze.js").Direction} Direction */
 /** @typedef {Direction | {answer: number}} Action */
+/** @typedef {import("../../src/games/robot-maze/state.js").Level} Level */
 
 const RUN_TTL_MS = 60 * 60 * 1000;
-const MAX_ACTIONS = 2000;
+/** A bigger maze needs more moves, wrong turns included. */
+const MAX_ACTIONS = { standard: 2000, hard: 8000 };
 
 /**
  * Robot Maze runs timed by the server: the maze comes from a seed the server chose, and a run
@@ -23,9 +25,12 @@ export function createMazeRuns({ db, now, randomBytes }) {
   return {
     /**
      * @param {string} playerId
+     * @param {Record<string, unknown>} body `{level}`
      * @returns {Promise<Reply>}
+     * @throws {BadRequestError}
      */
-    async start(playerId) {
+    async start(playerId, body) {
+      const level = _level(body);
       await db
         .prepare("DELETE FROM maze_runs WHERE finished_at IS NULL AND started_at <= ?")
         .bind(oldest())
@@ -33,8 +38,10 @@ export function createMazeRuns({ db, now, randomBytes }) {
       const runId = randomId(randomBytes);
       const seed = new DataView(randomBytes(4).buffer).getUint32(0);
       await db
-        .prepare("INSERT INTO maze_runs (id, player_id, seed, started_at) VALUES (?, ?, ?, ?)")
-        .bind(runId, playerId, seed, now())
+        .prepare(
+          "INSERT INTO maze_runs (id, player_id, seed, level, started_at) VALUES (?, ?, ?, ?, ?)",
+        )
+        .bind(runId, playerId, seed, level, now())
         .run();
       return { status: 201, body: { runId, seed } };
     },
@@ -47,18 +54,19 @@ export function createMazeRuns({ db, now, randomBytes }) {
      * @throws {BadRequestError}
      */
     async finish(playerId, runId, body) {
-      const actions = _actions(body);
       const run = await db
         .prepare(
-          `SELECT seed, started_at, finished_at FROM maze_runs
+          `SELECT seed, level, started_at, finished_at FROM maze_runs
            WHERE id = ? AND player_id = ? AND started_at > ?`,
         )
         .bind(runId, playerId, oldest())
         .first();
       if (run === null) return { status: 404 };
+      const level = /** @type {Level} */ (run.level);
+      const actions = _actions(body, MAX_ACTIONS[level]);
       if (run.finished_at !== null) return { status: 409 };
 
-      const state = _replay(Number(run.seed), actions);
+      const state = _replay(Number(run.seed), level, actions);
       if (!state.finished) return { status: 422 };
       const finishedAt = now();
       const timeMs = finishedAt - Number(run.started_at) + state.penaltyMs;
@@ -77,15 +85,29 @@ export function createMazeRuns({ db, now, randomBytes }) {
 
 /**
  * @param {Record<string, unknown>} body
+ * @returns {Level}
+ * @throws {BadRequestError}
+ */
+function _level(body) {
+  const { level } = body;
+  if (!hasExactly(body, ["level"]) || typeof level !== "string" || !Object.hasOwn(LEVELS, level)) {
+    throw new BadRequestError(`level must be one of ${Object.keys(LEVELS).join(", ")}`);
+  }
+  return /** @type {Level} */ (level);
+}
+
+/**
+ * @param {Record<string, unknown>} body
+ * @param {number} maxActions
  * @returns {Action[]}
  * @throws {BadRequestError}
  */
-function _actions(body) {
+function _actions(body, maxActions) {
   const { actions } = body;
   if (!hasExactly(body, ["actions"]) || !Array.isArray(actions)) {
     throw new BadRequestError("actions must be a list");
   }
-  if (actions.length > MAX_ACTIONS) throw new BadRequestError(`more than ${MAX_ACTIONS} actions`);
+  if (actions.length > maxActions) throw new BadRequestError(`more than ${maxActions} actions`);
   if (!actions.every(_isAction)) throw new BadRequestError("invalid action");
   return actions;
 }
@@ -106,10 +128,11 @@ function _isAction(action) {
 
 /**
  * @param {number} seed
+ * @param {Level} level
  * @param {Action[]} actions
  */
-function _replay(seed, actions) {
-  let state = createGame({ ...STANDARD_GAME, rng: createRng(seed) });
+function _replay(seed, level, actions) {
+  let state = createGame({ ...LEVELS[level], rng: createRng(seed) });
   for (const action of actions) {
     state = typeof action === "string" ? move(state, action) : answer(state, action.answer);
   }

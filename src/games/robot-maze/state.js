@@ -19,10 +19,14 @@ import { placeRobots } from "./robots.js";
  * @property {boolean} finished
  */
 /** @typedef {{size: number, robotCount: number, rng: Rng}} GameConfig */
+/** @typedef {keyof typeof LEVELS} Level */
 
 export const PENALTY_MS = 5000;
-/** The game everyone plays; the Worker replays runs with the same settings. */
-export const STANDARD_GAME = { size: 10, robotCount: 10 };
+/** The levels everyone plays; the Worker replays runs with the same settings. */
+export const LEVELS = {
+  standard: { size: 10, robotCount: 10 },
+  hard: { size: 20, robotCount: 20 },
+};
 
 /**
  * @param {GameConfig} config

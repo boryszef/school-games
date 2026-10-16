@@ -16,6 +16,8 @@ Ten robots stand on the way to the flag. To get past a robot in row _r_ and colu
 
 Controls: the arrow keys or WASD, the on-screen arrows, or tapping the next cell. Answers can be typed or entered with the on-screen number pad.
 
+**🦾 Robot Maze – hard** is the same game on a 20×20 maze with 20 robots, so the questions go up to 20 × 20. It has its own tile, best time and leaderboard.
+
 ### 🪢 Tug of War (Przeciąganie liny)
 
 A multiplication duel for two players on two devices. Both players get the same question, from 2 × 2 to 10 × 10. The faster correct answer pulls the rope one step towards that player, and the first to pull it 5 steps to their side wins. A wrong answer freezes the player for 2 seconds.

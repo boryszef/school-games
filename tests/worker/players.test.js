@@ -70,5 +70,6 @@ test("requests that need a player are refused without the right token", async ()
     const duel = { matchId: "m00000000001", opponentId: other.id, won: true };
     assert.equal((await call("POST", "/duels", { ...auth, body: duel })).status, 401);
   }
-  assert.equal((await call("POST", "/maze-runs", { token: player.token })).status, 201);
+  const start = { token: player.token, body: { level: "standard" } };
+  assert.equal((await call("POST", "/maze-runs", start)).status, 201);
 });

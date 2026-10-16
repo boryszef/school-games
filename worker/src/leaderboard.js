@@ -2,6 +2,7 @@ import { formatNickname } from "../../src/core/online/nickname.js";
 
 /** @typedef {import("./db.js").Db} Db */
 /** @typedef {import("./http.js").Reply} Reply */
+/** @typedef {import("../../src/games/robot-maze/state.js").Level} Level */
 
 const TOP = 10;
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -13,20 +14,25 @@ const CACHE_CONTROL = "no-store";
  * @param {{db: Db, now: () => number}} deps
  */
 export function createLeaderboard({ db, now }) {
-  /** Each player's best time (the earlier run on a tie), fastest first. */
-  const mazeTop = async (/** @type {number} */ since) => {
+  /**
+   * Each player's best time on a level (the earlier run on a tie), fastest first.
+   * @param {Level} level
+   * @param {number} since
+   */
+  const mazeTop = async (level, since) => {
     const { results } = await db
       .prepare(
         `SELECT p.color, p.animal, p.number, best.time_ms
          FROM (SELECT player_id, time_ms, finished_at,
                  ROW_NUMBER() OVER (PARTITION BY player_id ORDER BY time_ms, finished_at) AS place
-               FROM maze_runs WHERE finished_at IS NOT NULL AND finished_at >= ?) AS best
+               FROM maze_runs
+               WHERE level = ? AND finished_at IS NOT NULL AND finished_at >= ?) AS best
          JOIN players AS p ON p.id = best.player_id
          WHERE best.place = 1
          ORDER BY best.time_ms, best.finished_at
          LIMIT ?`,
       )
-      .bind(since, TOP)
+      .bind(level, since, TOP)
       .all();
     return results.map((row) => ({ nickname: _nickname(row), timeMs: Number(row.time_ms) }));
   };
@@ -55,7 +61,8 @@ export function createLeaderboard({ db, now }) {
         status: 200,
         headers: { "Cache-Control": CACHE_CONTROL },
         body: {
-          maze: { allTime: await mazeTop(0), week: await mazeTop(week) },
+          maze: { allTime: await mazeTop("standard", 0), week: await mazeTop("standard", week) },
+          mazeHard: { allTime: await mazeTop("hard", 0), week: await mazeTop("hard", week) },
           duels: { allTime: await duelTop(0), week: await duelTop(week) },
         },
       };

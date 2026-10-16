@@ -9,7 +9,10 @@ import { h } from "../core/ui/dom.js";
  * @template Entry
  * @typedef {{allTime: Entry[], week: Entry[]}} Rankings
  */
-/** @typedef {{maze: Rankings<MazeEntry>, duels: Rankings<DuelEntry>}} Leaderboard */
+/**
+ * @typedef {{maze: Rankings<MazeEntry>, mazeHard: Rankings<MazeEntry>, duels: Rankings<DuelEntry>}}
+ *   Leaderboard
+ */
 
 /** @type {import("../core/app.js").Screen} */
 export function renderLeaderboard(root, app) {
@@ -46,6 +49,7 @@ function _sections(app, board) {
   const wins = (entry) => String(entry.wins);
   return [
     _section(t, "🤖 " + t("robotMaze.title"), board.maze, t("leaderboard.time"), time, me),
+    _section(t, "🦾 " + t("robotMaze.hardTitle"), board.mazeHard, t("leaderboard.time"), time, me),
     _section(t, "🪢 " + t("tugOfWar.title"), board.duels, t("leaderboard.wins"), wins, me),
   ];
 }
