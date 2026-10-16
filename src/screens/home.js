@@ -24,7 +24,7 @@ export function renderHome(root, app) {
   );
 
   root.replaceChildren(
-    h("h1", {}, t("home.title")),
+    h("h1", { class: "home-title" }, t("home.title")),
     notice,
     h("div", { class: "game-grid" }, ...tiles),
   );
