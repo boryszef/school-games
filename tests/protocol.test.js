@@ -2,6 +2,8 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   InvalidMessageError,
+  PROTOCOL_VERSION,
+  VersionMismatchError,
   parseGuestMessage,
   parseHostMessage,
 } from "../src/games/tug-of-war/protocol.js";
@@ -10,8 +12,8 @@ const json = (/** @type {unknown} */ message) => JSON.stringify(message);
 
 test("valid host messages parse", () => {
   const messages = [
-    { type: "hello", name: "RedFox1", playerId: "i".repeat(22) },
-    { type: "hello", name: "RedFox1", playerId: null },
+    { type: "hello", name: "RedFox1", playerId: "i".repeat(22), version: 2 },
+    { type: "hello", name: "RedFox1", playerId: null, version: 2 },
     { type: "start", matchId: "m0-_00000001" },
     { type: "question", round: 3, a: 7, b: 8 },
     { type: "tug", round: 3, winner: "guest", rope: -2 },
@@ -22,8 +24,8 @@ test("valid host messages parse", () => {
 
 test("valid guest messages parse", () => {
   const messages = [
-    { type: "hello", name: "BlueOwl7", playerId: "Ab-_".repeat(5) + "xy" },
-    { type: "hello", name: "BlueOwl7", playerId: null },
+    { type: "hello", name: "BlueOwl7", playerId: "Ab-_".repeat(5) + "xy", version: 2 },
+    { type: "hello", name: "BlueOwl7", playerId: null, version: 2 },
     { type: "answer", round: 1, value: 56, reactionMs: 1834.5 },
   ];
   for (const message of messages) assert.deepEqual(parseGuestMessage(json(message)), message);
@@ -46,13 +48,13 @@ test("invalid host messages are rejected", () => {
     json(null),
     json([]),
     json({ type: "nope" }),
-    json({ type: "hello", name: "", playerId: null }),
-    json({ type: "hello", name: "x".repeat(21), playerId: null }),
-    json({ type: "hello", name: 5, playerId: null }),
-    json({ type: "hello", name: "RedFox1" }),
-    json({ type: "hello", name: "RedFox1", playerId: "short" }),
-    json({ type: "hello", name: "RedFox1", playerId: "!".repeat(22) }),
-    json({ type: "hello", name: "RedFox1", playerId: 5 }),
+    json({ type: "hello", name: "", playerId: null, version: 2 }),
+    json({ type: "hello", name: "x".repeat(21), playerId: null, version: 2 }),
+    json({ type: "hello", name: 5, playerId: null, version: 2 }),
+    json({ type: "hello", name: "RedFox1", version: 2 }),
+    json({ type: "hello", name: "RedFox1", playerId: "short", version: 2 }),
+    json({ type: "hello", name: "RedFox1", playerId: "!".repeat(22), version: 2 }),
+    json({ type: "hello", name: "RedFox1", playerId: 5, version: 2 }),
     json({ type: "question", round: 0, a: 7, b: 8 }),
     json({ type: "question", round: 1.5, a: 7, b: 8 }),
     json({ type: "question", round: 1, a: 1, b: 8 }),
@@ -83,4 +85,27 @@ test("invalid guest messages are rejected", () => {
   for (const raw of invalid) {
     assert.throws(() => parseGuestMessage(raw), InvalidMessageError, `accepted ${raw}`);
   }
+});
+
+test("the protocol version is 2", () => {
+  assert.equal(PROTOCOL_VERSION, 2);
+});
+
+test("a hello from a different version of the game is a version mismatch", () => {
+  const hellos = [
+    { type: "hello", name: "RedFox1", playerId: null, version: 1 },
+    { type: "hello", name: "RedFox1", playerId: null, version: 3 },
+    { type: "hello", name: "RedFox1", playerId: null, version: "2" },
+    { type: "hello", name: "RedFox1", playerId: null },
+    { type: "hello", name: "Ala" },
+  ];
+  for (const hello of hellos) {
+    assert.throws(() => parseHostMessage(json(hello)), VersionMismatchError, json(hello));
+    assert.throws(() => parseGuestMessage(json(hello)), VersionMismatchError, json(hello));
+  }
+});
+
+test("other messages without a version are not version mismatches", () => {
+  assert.throws(() => parseHostMessage(json({ type: "start" })), InvalidMessageError);
+  assert.throws(() => parseGuestMessage(json({ type: "nope", version: 1 })), InvalidMessageError);
 });

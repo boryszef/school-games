@@ -24,6 +24,10 @@ import { createRope } from "./rope.js";
  */
 export function createMatchView(root, { t, myName, onCorrect, onPlayAgain, onHome, prompt }) {
   let opponentName = "…";
+  /** @type {ReturnType<typeof createResultPanel> | null} The ended match's result, if shown. */
+  let result = null;
+  /** After a version mismatch nothing else replaces its message. */
+  let stopped = false;
   const rope = createRope(myName);
   const card = createQuestionCard(t, onCorrect);
   const status = h("p", { class: "tw-status", "aria-live": "polite" });
@@ -41,6 +45,20 @@ export function createMatchView(root, { t, myName, onCorrect, onPlayAgain, onHom
 
   /** @param {Node} node */
   const showOverlay = (node) => stage.append(node);
+  /** @param {string} key */
+  const showMessage = (key) =>
+    showOverlay(
+      h(
+        "div",
+        { class: "tw-overlay" },
+        h(
+          "div",
+          { class: "tw-panel" },
+          h("p", {}, t(key)),
+          h("button", { type: "button", class: "button", onclick: onHome }, t("tugOfWar.home")),
+        ),
+      ),
+    );
 
   return {
     /** @param {string} name */
@@ -50,6 +68,7 @@ export function createMatchView(root, { t, myName, onCorrect, onPlayAgain, onHom
     },
     /** A new match: rope in the middle, no result. */
     reset() {
+      result = null;
       stage.replaceChildren(card.element);
       rope.move(0);
       card.lock();
@@ -74,24 +93,26 @@ export function createMatchView(root, { t, myName, onCorrect, onPlayAgain, onHom
     /** @param {boolean} won */
     finish(won) {
       card.lock();
-      showOverlay(
-        createResultPanel(t, { won, opponentName, onPlayAgain, onHome, prompt: prompt(won) }),
-      );
+      result = createResultPanel(t, {
+        won,
+        opponentName,
+        onPlayAgain,
+        onHome,
+        prompt: prompt(won),
+      });
+      showOverlay(result.element);
     },
+    /** A finished match keeps its result and prompt; only a new match becomes impossible. */
     connectionLost() {
+      if (stopped) return;
       card.lock();
-      showOverlay(
-        h(
-          "div",
-          { class: "tw-overlay" },
-          h(
-            "div",
-            { class: "tw-panel" },
-            h("p", {}, t("tugOfWar.connectionLost")),
-            h("button", { type: "button", class: "button", onclick: onHome }, t("tugOfWar.home")),
-          ),
-        ),
-      );
+      if (result === null) showMessage("tugOfWar.connectionLost");
+      else result.opponentLeft();
+    },
+    versionMismatch() {
+      stopped = true;
+      card.lock();
+      showMessage("tugOfWar.versionMismatch");
     },
   };
 }

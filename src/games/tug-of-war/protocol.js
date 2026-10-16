@@ -8,14 +8,14 @@ import { ROPE_TO_WIN } from "./match.js";
 
 /** @typedef {import("./match.js").Side} Side */
 /**
- * @typedef {{type: "hello", name: string, playerId: string | null}
+ * @typedef {{type: "hello", name: string, playerId: string | null, version: number}
  *   | {type: "start", matchId: string}
  *   | {type: "question", round: number, a: number, b: number}
  *   | {type: "tug", round: number, winner: Side, rope: number}
  *   | {type: "end", winner: Side}} HostMessage
  */
 /**
- * @typedef {{type: "hello", name: string, playerId: string | null}
+ * @typedef {{type: "hello", name: string, playerId: string | null, version: number}
  *   | {type: "answer", round: number, value: number, reactionMs: number}} GuestMessage
  */
 
@@ -24,6 +24,18 @@ export class InvalidMessageError extends Error {
   constructor(raw) {
     super(`Invalid message from the other player: ${raw.slice(0, 200)}`);
     this.name = "InvalidMessageError";
+  }
+}
+
+/** Raised whenever the messages change, so mixed versions are reported instead of misbehaving. */
+export const PROTOCOL_VERSION = 2;
+
+/** The other device runs a different version of the game (e.g. a page loaded before an update). */
+export class VersionMismatchError extends Error {
+  /** @param {unknown} version */
+  constructor(version) {
+    super(`The other player runs protocol version ${String(version)}, not ${PROTOCOL_VERSION}`);
+    this.name = "VersionMismatchError";
   }
 }
 
@@ -49,7 +61,7 @@ const matchId = (v) => typeof v === "string" && /^[A-Za-z0-9_-]{12}$/.test(v);
 
 /** @type {Record<string, Record<string, Check>>} */
 const HOST_MESSAGES = {
-  hello: { name, playerId },
+  hello: { name, playerId, version: (v) => v === PROTOCOL_VERSION },
   start: { matchId },
   question: { round, a: factor, b: factor },
   tug: { round, winner: side, rope: integerIn(-ROPE_TO_WIN, ROPE_TO_WIN) },
@@ -58,7 +70,7 @@ const HOST_MESSAGES = {
 
 /** @type {Record<string, Record<string, Check>>} */
 const GUEST_MESSAGES = {
-  hello: { name, playerId },
+  hello: { name, playerId, version: (v) => v === PROTOCOL_VERSION },
   answer: {
     round,
     value: integerIn(0, Number.MAX_SAFE_INTEGER),
@@ -69,7 +81,7 @@ const GUEST_MESSAGES = {
 /**
  * @param {string} raw
  * @returns {HostMessage}
- * @throws {InvalidMessageError}
+ * @throws {InvalidMessageError | VersionMismatchError}
  */
 export function parseHostMessage(raw) {
   return /** @type {HostMessage} */ (_parse(raw, HOST_MESSAGES));
@@ -78,7 +90,7 @@ export function parseHostMessage(raw) {
 /**
  * @param {string} raw
  * @returns {GuestMessage}
- * @throws {InvalidMessageError}
+ * @throws {InvalidMessageError | VersionMismatchError}
  */
 export function parseGuestMessage(raw) {
   return /** @type {GuestMessage} */ (_parse(raw, GUEST_MESSAGES));
@@ -98,6 +110,9 @@ function _parse(raw, schemas) {
   }
   if (typeof message !== "object" || message === null || Array.isArray(message)) {
     throw new InvalidMessageError(raw);
+  }
+  if (message.type === "hello" && message.version !== PROTOCOL_VERSION) {
+    throw new VersionMismatchError(message.version);
   }
   const schema = Object.hasOwn(schemas, message.type) ? schemas[message.type] : undefined;
   if (schema === undefined) throw new InvalidMessageError(raw);

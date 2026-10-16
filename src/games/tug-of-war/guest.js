@@ -1,5 +1,6 @@
 import { createDuelPrompt } from "./leaderboard.js";
-import { parseHostMessage } from "./protocol.js";
+import { log } from "../../core/log.js";
+import { PROTOCOL_VERSION, VersionMismatchError, parseHostMessage } from "./protocol.js";
 import { createMatchView } from "./view.js";
 
 /** @typedef {import("../../core/registry.js").GameContext} GameContext */
@@ -33,7 +34,17 @@ export function runGuest(root, ctx, channel) {
   });
 
   channel.onMessage((raw) => {
-    const message = parseHostMessage(raw);
+    /** @type {import("./protocol.js").HostMessage} */
+    let message;
+    try {
+      message = parseHostMessage(raw);
+    } catch (error) {
+      if (!(error instanceof VersionMismatchError)) throw error;
+      log.info(error.message);
+      view.versionMismatch();
+      channel.close();
+      return;
+    }
     switch (message.type) {
       case "hello":
         opponentId = message.playerId;
@@ -56,7 +67,12 @@ export function runGuest(root, ctx, channel) {
     }
   });
   channel.onClose(() => view.connectionLost());
-  send({ type: "hello", name: ctx.player.name, playerId: ctx.player.account?.id ?? null });
+  send({
+    type: "hello",
+    name: ctx.player.name,
+    playerId: ctx.player.account?.id ?? null,
+    version: PROTOCOL_VERSION,
+  });
 
   return () => channel.close();
 }

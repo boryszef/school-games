@@ -65,8 +65,10 @@
 }
 
 .rm-cell.is-disabled-robot {
-  filter: grayscale(1);
-  opacity: 0.35;
+  color: var(--muted);
+  font-size: 0.9em;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
 }
 
 .rm-cell.is-challenged {

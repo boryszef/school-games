@@ -5,6 +5,7 @@ import { positionKey } from "./path.js";
 /** @typedef {import("./maze.js").Maze} Maze */
 /** @typedef {import("./maze.js").Position} Position */
 /** @typedef {import("./state.js").GameState} GameState */
+/** @typedef {import("./state.js").Robot} Robot */
 
 const PLAYER = "🧒";
 const ROBOT = "🤖";
@@ -45,7 +46,8 @@ export function createBoard(maze, onCellTap) {
       const exitKey = positionKey(state.exit);
       for (const [key, cell] of cells) {
         const robot = robots.get(key);
-        cell.textContent = key === playerKey ? PLAYER : robot ? ROBOT : key === exitKey ? EXIT : "";
+        cell.textContent =
+          key === playerKey ? PLAYER : robot ? _robotFace(robot) : key === exitKey ? EXIT : "";
         cell.classList.toggle("is-disabled-robot", robot !== undefined && !robot.active);
         cell.classList.toggle(
           "is-challenged",
@@ -54,6 +56,14 @@ export function createBoard(maze, onCellTap) {
       }
     },
   };
+}
+
+/**
+ * A beaten robot shows the answer that beat it.
+ * @param {Robot} robot
+ */
+function _robotFace(robot) {
+  return robot.active ? ROBOT : String(robot.row * robot.col);
 }
 
 /**

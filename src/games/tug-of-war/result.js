@@ -13,6 +13,8 @@ import { h } from "../../core/ui/dom.js";
 /**
  * @param {Translate} t
  * @param {ResultOptions} options
+ * @returns {{element: HTMLElement, opponentLeft: () => void}} `opponentLeft` replaces "Play
+ *   again" (or the guest's waiting line), since no new match can start.
  */
 export function createResultPanel(t, { won, opponentName, onPlayAgain, onHome, prompt }) {
   const again =
@@ -23,7 +25,7 @@ export function createResultPanel(t, { won, opponentName, onPlayAgain, onHome, p
           { type: "button", class: "button", onclick: onPlayAgain },
           t("tugOfWar.playAgain"),
         );
-  return h(
+  const element = h(
     "div",
     { class: "tw-overlay" },
     h(
@@ -39,4 +41,8 @@ export function createResultPanel(t, { won, opponentName, onPlayAgain, onHome, p
       ),
     ),
   );
+  return {
+    element,
+    opponentLeft: () => again.replaceWith(h("p", {}, t("tugOfWar.opponentLeft"))),
+  };
 }

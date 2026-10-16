@@ -72,6 +72,19 @@ test("after a correct answer the card waits for the next question", () => {
   assert.equal(input.disabled, true);
 });
 
+test("a correct answer clears the question at once, until the next one", () => {
+  const { card, input, submit } = openCard();
+  card.show({ a: 7, b: 8 });
+  submit("56");
+  assert.equal(card.element.querySelector(".tw-question")?.textContent, "");
+  assert.equal(input.value, "");
+  assert.equal(card.element.querySelector(".tw-feedback")?.textContent, "Correct!");
+
+  card.show({ a: 3, b: 9 });
+  assert.equal(card.element.querySelector(".tw-question")?.textContent, "3 × 9 = ?");
+  assert.equal(card.element.querySelector(".tw-feedback")?.textContent, "");
+});
+
 test("a wrong answer shakes the card and freezes it", () => {
   const { card, form, input, submit, correct } = openCard();
   card.show({ a: 6, b: 7 });

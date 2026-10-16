@@ -56,6 +56,8 @@ export function createQuestionCard(t, onCorrect, now = () => performance.now()) 
     const value = Number(input.value);
     if (value === question.a * question.b) {
       setAccepting(false);
+      text.textContent = "";
+      input.value = "";
       feedback.textContent = t("tugOfWar.correct");
       onCorrect({ value, reactionMs: now() - shownAt });
     } else {

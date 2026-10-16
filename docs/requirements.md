@@ -33,7 +33,7 @@ Education games is a static web app (HTML, CSS and ES-module JavaScript with no 
 - R4.3 Exactly 10 robots are placed on distinct cells of the start→exit path, never on the start or the exit cell.
 - R4.4 The player moves one cell at a time with the arrow keys or WASD, the on-screen d-pad, or by tapping an adjacent cell. Moves through walls are ignored.
 - R4.5 Moving into a cell with an active robot doesn't move the player. Instead it opens a challenge "row × col = ?".
-- R4.6 A correct answer disables the robot and moves the player into its cell.
+- R4.6 A correct answer disables the robot and moves the player into its cell. From then on the board shows the robot's product (e.g. `56`) in that cell instead of the robot, except while the player stands there.
 - R4.7 A wrong answer adds a 5000 ms penalty, records the `[row, col]` mistake and keeps the challenge open for a retry. The UI shows "try again" feedback.
 - R4.8 Answers are typed on the keyboard (`inputmode="numeric"`) or with the on-screen number pad.
 - R4.9 The timer starts when the maze appears and stops when the player reaches the exit. The displayed time includes penalties.
@@ -64,8 +64,8 @@ Education games is a static web app (HTML, CSS and ES-module JavaScript with no 
   - The 60 s connection time runs out: the timeout message, with "Try again with a new invitation" and "Back to games".
   - The browser gives up on the connection: "Could not connect", with "Back to games".
 - R6.6 ICE candidates are gathered in full before the offer or answer is sent (non-trickle, capped at 3 s).
-- R6.7 Messages between the peers are JSON and are validated on receipt. An invalid message is an error.
-- R6.8 When the connection drops, both players see "connection lost" and can go home.
+- R6.7 Messages between the peers are JSON and are validated on receipt. An invalid message is an error. `hello` carries the protocol version (currently 2). If the other device sends a different version or none, both players see "You and your friend have different versions of the game – reload the page on both devices" with "Choose another game", and the connection is closed.
+- R6.8 When the connection drops during a match, both players see "connection lost" and can go home. When it drops after a match has ended, the result and the leaderboard prompt stay. "Play again" (or the guest's waiting line) is replaced by "Your friend has left."
 
 ## R7 – Tug of War rules
 
@@ -73,7 +73,7 @@ Education games is a static web app (HTML, CSS and ES-module JavaScript with no 
 - R7.2 Both players get the same question a × b with a and b in 2–10. A question never repeats the one right before it.
 - R7.3 Each player's reaction time is measured on their own device from when the question appeared. The host waits up to 300 ms after the first correct answer (or until both have answered) and then gives the round to the faster reaction time. On equal times the answer recorded first wins.
 - R7.4 The winner of a round tugs the rope one step towards their side. The first player to pull the rope 5 steps to their side wins the match.
-- R7.5 A wrong answer shakes the card and freezes that player for 2 s, after which they can answer again. The freeze counts towards their reaction time.
+- R7.5 A correct answer clears the question and the typed answer at once, and only "Correct!" stays until the next question. A wrong answer shakes the card and freezes that player for 2 s, after which they can answer again. The freeze counts towards their reaction time.
 - R7.6 After a tug there is a short pause (about 1.2 s) for the animation, then the next question.
 - R7.7 Answers are typed on the keyboard or with the on-screen number pad.
 - R7.8 Both players' names are shown at the ends of the rope. The result screen shows the winner and offers "Play again" (started by the host; the guest waits) and "Home".

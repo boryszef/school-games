@@ -1,7 +1,7 @@
 import { log } from "../../core/log.js";
 import { createDuelPrompt, newMatchId } from "./leaderboard.js";
 import { GRACE_MS, createMatch, recordAnswer, resolveRound } from "./match.js";
-import { parseGuestMessage } from "./protocol.js";
+import { PROTOCOL_VERSION, VersionMismatchError, parseGuestMessage } from "./protocol.js";
 import { createMatchView } from "./view.js";
 
 /** @typedef {import("../../core/registry.js").GameContext} GameContext */
@@ -44,7 +44,18 @@ export function runHost(root, ctx, channel) {
   const send = (message) => channel.send(message);
 
   channel.onMessage((raw) => {
-    const message = parseGuestMessage(raw);
+    /** @type {import("./protocol.js").GuestMessage} */
+    let message;
+    try {
+      message = parseGuestMessage(raw);
+    } catch (error) {
+      if (!(error instanceof VersionMismatchError)) throw error;
+      log.info(error.message);
+      clearTimeout(timer);
+      view.versionMismatch();
+      channel.close();
+      return;
+    }
     if (message.type === "hello") {
       opponentId = message.playerId;
       view.setOpponent(message.name);
@@ -56,7 +67,12 @@ export function runHost(root, ctx, channel) {
     clearTimeout(timer);
     view.connectionLost();
   });
-  send({ type: "hello", name: ctx.player.name, playerId: ctx.player.account?.id ?? null });
+  send({
+    type: "hello",
+    name: ctx.player.name,
+    playerId: ctx.player.account?.id ?? null,
+    version: PROTOCOL_VERSION,
+  });
   start();
 
   function start() {
