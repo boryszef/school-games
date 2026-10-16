@@ -1,5 +1,5 @@
 import { callApi } from "../../core/online/api.js";
-import { createLeaderboardPrompt } from "../../core/ui/leaderboard-prompt.js";
+import { submitToLeaderboard } from "../../core/ui/leaderboard-submit.js";
 
 /** @typedef {import("../../core/i18n.js").Translate} Translate */
 /** @typedef {import("../../core/storage.js").Account} Account */
@@ -22,15 +22,15 @@ export function newMatchId() {
 }
 
 /**
- * The leaderboard prompt after a match. The win counts only if both players say yes (R8.5),
- * so it is offered only when both have a leaderboard id.
+ * Reports the match to the leaderboard. The win counts only when both players' reports agree
+ * (R8.5), so it is sent only when both have a leaderboard id.
  * @param {Translate} t
  * @param {DuelResult} result
  * @returns {HTMLElement | null}
  */
-export function createDuelPrompt(t, { account, opponentId, matchId, won }) {
+export function submitDuel(t, { account, opponentId, matchId, won }) {
   if (account === null || opponentId === null) return null;
-  return createLeaderboardPrompt(t, async () => {
+  return submitToLeaderboard(t, async () => {
     await callApi("POST", "/duels", {
       token: account.token,
       body: { matchId, opponentId, won },

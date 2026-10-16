@@ -13,7 +13,8 @@ import { createRope } from "./rope.js";
  * @property {(answer: CorrectAnswer) => void} onCorrect
  * @property {(() => void) | null} onPlayAgain Null for the guest, who waits for the host.
  * @property {() => void} onHome
- * @property {(won: boolean) => HTMLElement | null} prompt The leaderboard prompt, if offered.
+ * @property {(won: boolean) => HTMLElement | null} submission Sends the result to the
+ *   leaderboard and shows its status, when both players have an account.
  */
 
 /**
@@ -22,7 +23,7 @@ import { createRope } from "./rope.js";
  * @param {HTMLElement} root
  * @param {MatchViewOptions} options
  */
-export function createMatchView(root, { t, myName, onCorrect, onPlayAgain, onHome, prompt }) {
+export function createMatchView(root, { t, myName, onCorrect, onPlayAgain, onHome, submission }) {
   let opponentName = "…";
   /** @type {ReturnType<typeof createResultPanel> | null} The ended match's result, if shown. */
   let result = null;
@@ -98,11 +99,11 @@ export function createMatchView(root, { t, myName, onCorrect, onPlayAgain, onHom
         opponentName,
         onPlayAgain,
         onHome,
-        prompt: prompt(won),
+        submission: submission(won),
       });
       showOverlay(result.element);
     },
-    /** A finished match keeps its result and prompt; only a new match becomes impossible. */
+    /** A finished match keeps its result and leaderboard status; only a new match becomes impossible. */
     connectionLost() {
       if (stopped) return;
       card.lock();

@@ -2,6 +2,7 @@
 import { spawn } from "node:child_process";
 import { networkInterfaces } from "node:os";
 import { REPO, WRANGLER, WRANGLER_CONFIG, applyLocalMigrations } from "./local-db.js";
+import { startStaticServer } from "./static-server.js";
 
 const SITE_PORT = 8000;
 const WORKER_PORT = 8787;
@@ -15,15 +16,8 @@ const origins = hosts.map((host) => `http://${host}:${SITE_PORT}`);
 
 applyLocalMigrations();
 
+const site = await startStaticServer(REPO, SITE_PORT, "0.0.0.0");
 const children = [
-  {
-    name: "static server",
-    // It logs every request on stderr; the browser's network tab shows the same.
-    process: spawn("python3", ["-m", "http.server", String(SITE_PORT), "--bind", "0.0.0.0"], {
-      cwd: REPO,
-      stdio: "ignore",
-    }),
-  },
   {
     name: "local Worker",
     process: spawn(
@@ -48,6 +42,7 @@ let stopping = false;
 function stopAll() {
   if (stopping) return;
   stopping = true;
+  site.close();
   for (const child of children) child.process.kill("SIGTERM");
 }
 for (const child of children) {

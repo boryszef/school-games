@@ -295,21 +295,15 @@ select {
   gap: 8px;
 }
 
-/* Leaderboard: the prompt after a game and the rankings screen. */
-.lb-prompt {
+/* Leaderboard: the status after a game and the rankings screen. */
+.lb-submit {
   margin: 12px 0;
   padding: 12px;
   border-radius: var(--radius);
   background: var(--surface);
 }
 
-.lb-prompt-actions {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-}
-
-.lb-prompt-status {
+.lb-submit-status {
   min-height: 1.5em;
 }
 

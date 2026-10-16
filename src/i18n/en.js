@@ -56,10 +56,8 @@ export default {
   "leaderboard.player": "Player",
   "leaderboard.time": "Time",
   "leaderboard.wins": "Wins",
-  "leaderboard.ask": "Add your score to the leaderboard?",
-  "leaderboard.yes": "Yes",
-  "leaderboard.no": "No",
   "leaderboard.sending": "Sending…",
   "leaderboard.added": "Added!",
-  "leaderboard.failed": "Could not send it. Try again.",
+  "leaderboard.failed": "Could not send it.",
+  "leaderboard.retry": "Try again",
 };

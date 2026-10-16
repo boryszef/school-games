@@ -1,4 +1,4 @@
-import { createDuelPrompt } from "./leaderboard.js";
+import { submitDuel } from "./leaderboard.js";
 import { log } from "../../core/log.js";
 import { PROTOCOL_VERSION, VersionMismatchError, parseHostMessage } from "./protocol.js";
 import { createMatchView } from "./view.js";
@@ -29,8 +29,8 @@ export function runGuest(root, ctx, channel) {
     onCorrect: ({ value, reactionMs }) => send({ type: "answer", round, value, reactionMs }),
     onPlayAgain: null,
     onHome: ctx.exit,
-    prompt: (won) =>
-      createDuelPrompt(ctx.t, { account: ctx.player.account, opponentId, matchId, won }),
+    submission: (won) =>
+      submitDuel(ctx.t, { account: ctx.player.account, opponentId, matchId, won }),
   });
 
   channel.onMessage((raw) => {

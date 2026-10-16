@@ -59,10 +59,8 @@ export default {
   "leaderboard.player": "Gracz",
   "leaderboard.time": "Czas",
   "leaderboard.wins": "Wygrane",
-  "leaderboard.ask": "Dodać twój wynik do rankingu?",
-  "leaderboard.yes": "Tak",
-  "leaderboard.no": "Nie",
   "leaderboard.sending": "Wysyłam…",
   "leaderboard.added": "Dodano!",
-  "leaderboard.failed": "Nie udało się wysłać. Spróbuj ponownie.",
+  "leaderboard.failed": "Nie udało się wysłać.",
+  "leaderboard.retry": "Spróbuj ponownie",
 };

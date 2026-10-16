@@ -5,7 +5,7 @@ import { createRng } from "../../core/random.js";
 import { createTimer } from "../../core/timer.js";
 import { h, loadStylesheet } from "../../core/ui/dom.js";
 import { createDpad } from "../../core/ui/dpad.js";
-import { createLeaderboardPrompt } from "../../core/ui/leaderboard-prompt.js";
+import { submitToLeaderboard } from "../../core/ui/leaderboard-submit.js";
 import { createBoard } from "./board.js";
 import { createChallengeDialog } from "./challenge.js";
 import { messages } from "./i18n.js";
@@ -211,7 +211,7 @@ function _playRound(root, ctx, level, restart, run) {
         t,
         { timeMs, mistakes: state.mistakes.length, previousBestMs },
         { onPlayAgain: restart, onHome: ctx.exit },
-        run === null ? null : _prompt(t, run, actions),
+        run === null ? null : _submitRun(t, run, actions),
       ),
     );
   }
@@ -227,8 +227,8 @@ function _playRound(root, ctx, level, restart, run) {
  * @param {ServerRun} run
  * @param {Action[]} actions
  */
-function _prompt(t, run, actions) {
-  return createLeaderboardPrompt(t, async () => {
+function _submitRun(t, run, actions) {
+  return submitToLeaderboard(t, async () => {
     const { data } = await callApi("POST", `/maze-runs/${run.runId}/finish`, {
       token: run.token,
       body: { actions },

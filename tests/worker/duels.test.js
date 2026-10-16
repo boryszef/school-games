@@ -25,7 +25,7 @@ async function twoPlayers() {
       body: { matchId: match, opponentId: opponent.id, won },
     });
   /**
-   * Both players say yes to the same match.
+   * Both players report the same match.
    * @param {string} match
    * @param {TestPlayer} winner
    * @param {TestPlayer} loser
@@ -44,6 +44,27 @@ async function twoPlayers() {
 test("a win counts when both players report the same result", async () => {
   const { ala, ola, confirmed, wins } = await twoPlayers();
   await confirmed(matchId(1), ala, ola);
+  assert.deepEqual(await wins(), [{ nickname: ala.nickname, wins: 1 }]);
+});
+
+test("a report whose win the other report's request has just recorded still succeeds", async () => {
+  // Both players send as soon as the match ends, so the requests overlap: each finds the other's
+  // report, and the slower one finds the win already recorded.
+  const { worker, ala, ola, report, wins } = await twoPlayers();
+  const now = Date.UTC(2026, 9, 14, 12);
+  await worker.db
+    .prepare(
+      `INSERT INTO duel_reports (match_id, reporter_id, opponent_id, won, created_at)
+       VALUES (?, ?, ?, 1, ?)`,
+    )
+    .bind(matchId(1), ala.id, ola.id, now)
+    .run();
+  await worker.db
+    .prepare("INSERT INTO duel_wins (match_id, winner_id, loser_id, won_at) VALUES (?, ?, ?, ?)")
+    .bind(matchId(1), ala.id, ola.id, now)
+    .run();
+
+  assert.equal((await report(ola, matchId(1), ala, false)).status, 202);
   assert.deepEqual(await wins(), [{ nickname: ala.nickname, wins: 1 }]);
 });
 

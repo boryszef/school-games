@@ -66,8 +66,12 @@ export function createDuels({ db, now, playerExists }) {
       .bind(winnerId, loserId, time - (time % DAY_MS))
       .first();
     if (Number(today?.wins) >= DAILY_WIN_CAP) return;
+    // Both players report as soon as the match ends, so both requests can get here; the
+    // match id keeps it to one win.
     await db
-      .prepare("INSERT INTO duel_wins (match_id, winner_id, loser_id, won_at) VALUES (?, ?, ?, ?)")
+      .prepare(
+        "INSERT OR IGNORE INTO duel_wins (match_id, winner_id, loser_id, won_at) VALUES (?, ?, ?, ?)",
+      )
       .bind(matchId, winnerId, loserId, time)
       .run();
   }

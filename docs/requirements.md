@@ -67,7 +67,7 @@ Education games is a static web app (HTML, CSS and ES-module JavaScript with no 
   - The browser gives up on the connection: "Could not connect", with "Back to games".
 - R6.6 ICE candidates are gathered in full before the offer or answer is sent (non-trickle, capped at 3 s).
 - R6.7 Messages between the peers are JSON and are validated on receipt. An invalid message is an error. `hello` carries the protocol version (currently 2). If the other device sends a different version or none, both players see "You and your friend have different versions of the game – reload the page on both devices" with "Choose another game", and the connection is closed.
-- R6.8 When the connection drops during a match, both players see "connection lost" and can go home. When it drops after a match has ended, the result and the leaderboard prompt stay. "Play again" (or the guest's waiting line) is replaced by "Your friend has left."
+- R6.8 When the connection drops during a match, both players see "connection lost" and can go home. When it drops after a match has ended, the result and the leaderboard status stay. "Play again" (or the guest's waiting line) is replaced by "Your friend has left."
 
 ## R7 – Tug of War rules
 
@@ -79,23 +79,23 @@ Education games is a static web app (HTML, CSS and ES-module JavaScript with no 
 - R7.6 After a tug there is a short pause (about 1.2 s) for the animation, then the next question.
 - R7.7 Answers are typed on the keyboard or with the on-screen number pad.
 - R7.8 Both players' names are shown at the ends of the rope. The result screen shows the winner and offers "Play again" (started by the host; the guest waits) and "Home".
-- R7.9 Matches are not saved to the player's stats. A win can be added to the leaderboard as in R8.5.
+- R7.9 Matches are not saved to the player's stats. A win is added to the leaderboard as in R8.5.
 
 ## R8 – Leaderboard
 
 - R8.1 **Nicknames.** `POST /players` creates a player with a nickname `<Color><Animal><N>`, such as `RedFox1`. The Worker picks the color and animal at random from fixed English lists (`src/core/online/nickname.js`). `N` is the next free number for that color and animal, so nicknames are unique. The response also gives a public id and a secret token. Creating players is limited to 10 a minute per IP.
 - R8.2 **Existing players.** At app start, a player without an account is registered and renamed to its new nickname. Runs and stats stay. If the Worker can't be reached, this is tried again at the next start, and until then the player can't add scores.
-- R8.3 **Prompt.** When a game ends, a player with an account is asked "Add your score to the leaderboard?" with **Yes** and **No**. Nothing is sent without **Yes**.
+- R8.3 **Sending.** When a game ends, the score of a player with an account is sent to the leaderboard automatically, without asking. The result card shows "Sending…", then the result. If the Worker can't be reached or refuses it, the card shows "Could not send it." with a **Try again** button.
 - R8.4 **Robot Maze times.**
   - With an account, a round starts with `POST /maze-runs` and the body `{level}`, where `level` is `standard` or `hard`. It returns a run id and the maze seed, and the server notes the start time. The maze is built from that seed, and the player's moves and answers are recorded.
-  - On **Yes**, they are sent to `POST /maze-runs/:id/finish`. The Worker replays them with the game's own rules for the run's level, and the run counts only if the replay reaches the exit. The leaderboard time is the server's elapsed time plus 5 s per wrong answer, and the result card shows it.
+  - When the round ends, they are sent to `POST /maze-runs/:id/finish`. The Worker replays them with the game's own rules for the run's level, and the run counts only if the replay reaches the exit. The leaderboard time is the server's elapsed time plus 5 s per wrong answer, and the result card shows it.
   - Each run can be finished once, within 1 hour, and only by its own player. At most 2000 actions are accepted on the standard level and 8000 on the hard one.
-  - If the Worker can't be reached at the start, the round is played locally and no prompt is shown.
+  - If the Worker can't be reached at the start, the round is played locally and nothing is sent.
 - R8.5 **Tug of War wins.**
-  - Both players are asked. On **Yes**, each sends `{matchId, opponentId, won}`.
+  - When the match ends, each player sends `{matchId, opponentId, won}`.
   - A win counts only when both reports for a match agree: each names the other, and exactly one won. Reports that disagree are discarded.
   - At most 3 wins per winner and opponent count per UTC day.
-  - The prompt appears only when both players have an account.
+  - Reports are sent only when both players have an account.
 - R8.6 **Rankings.** `#/leaderboard`, linked from the header (🏆) on every screen, shows, for each game, the top 10 all-time and the top 10 this week (since Monday 00:00 UTC):
   - Robot Maze and Robot Maze – hard, each with its own lists: each player's best time, fastest first.
   - Tug of War: number of wins, most first.

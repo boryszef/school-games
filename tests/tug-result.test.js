@@ -18,13 +18,13 @@ beforeEach(() => {
 /** @param {boolean} host */
 function panel(host) {
   const prompt = dom.document.createElement("div");
-  prompt.className = "lb-prompt";
+  prompt.className = "lb-submit";
   const result = createResultPanel(t, {
     won: host,
     opponentName: "BlueOwl7",
     onPlayAgain: host ? () => {} : null,
     onHome: () => {},
-    prompt,
+    submission: prompt,
   });
   /** @param {string} text */
   const has = (text) => result.element.textContent?.includes(text) ?? false;

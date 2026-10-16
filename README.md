@@ -34,10 +34,10 @@ Game traffic never passes through any server. Cloudflare's free STUN server tell
 
 There are no typed names. **New player** asks the Worker for a nickname `<Color><Animal><N>`, such as `RedFox1`. The Worker picks the color and animal at random, and `N` is the next free number for that pair, so nicknames are unique. Creating a player therefore needs internet; playing doesn't. Players created before nicknames existed are renamed automatically the next time the app starts online.
 
-After a game the player is asked whether to add the score to the leaderboard (`#/leaderboard`, top 10 per game, all-time and this week):
+After every finished game the score is added to the leaderboard automatically (`#/leaderboard`, top 10 per game, all-time and this week):
 
-- **Robot Maze** times are measured by the Worker, not the browser. The maze is built from a seed the Worker hands out when the round starts. When the player says yes, the Worker replays the recorded moves and answers with the game's own rules (`src/games/robot-maze/state.js`). It counts the run only if the replay reaches the flag, and the time is its own clock plus the penalties.
-- **Tug of War** wins count only when both players say yes and their reports agree, and at most 3 wins against the same opponent count per day.
+- **Robot Maze** times are measured by the Worker, not the browser. The maze is built from a seed the Worker hands out when the round starts. When the round ends, the Worker replays the recorded moves and answers with the game's own rules (`src/games/robot-maze/state.js`). It counts the run only if the replay reaches the flag, and the time is its own clock plus the penalties.
+- **Tug of War** wins count only when both players' reports agree, and at most 3 wins against the same opponent count per day.
 
 Each player has a secret token, of which the Worker keeps only a hash. The Worker stores no IP addresses.
 

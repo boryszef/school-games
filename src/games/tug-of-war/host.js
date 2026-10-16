@@ -1,5 +1,5 @@
 import { log } from "../../core/log.js";
-import { createDuelPrompt, newMatchId } from "./leaderboard.js";
+import { submitDuel, newMatchId } from "./leaderboard.js";
 import { GRACE_MS, createMatch, recordAnswer, resolveRound } from "./match.js";
 import { PROTOCOL_VERSION, VersionMismatchError, parseGuestMessage } from "./protocol.js";
 import { createMatchView } from "./view.js";
@@ -37,8 +37,8 @@ export function runHost(root, ctx, channel) {
     onCorrect: ({ reactionMs }) => record("host", state.round, reactionMs),
     onPlayAgain: start,
     onHome: ctx.exit,
-    prompt: (won) =>
-      createDuelPrompt(ctx.t, { account: ctx.player.account, opponentId, matchId, won }),
+    submission: (won) =>
+      submitDuel(ctx.t, { account: ctx.player.account, opponentId, matchId, won }),
   });
   /** @param {HostMessage} message */
   const send = (message) => channel.send(message);
