@@ -12,6 +12,6 @@
     "skipLibCheck": true,
     "maxNodeModuleJsDepth": 0
   },
-  "include": ["src/**/*.js", "tests/**/*.js", "worker/src/**/*.js"],
+  "include": ["src/**/*.js", "tests/**/*.js", "worker/src/**/*.js", "scripts/**/*.js"],
   "exclude": ["src/vendor/*.js"]
 }

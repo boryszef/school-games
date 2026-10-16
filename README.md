@@ -48,11 +48,16 @@ Requires [nvm](https://github.com/nvm-sh/nvm). The Node version is pinned in `.n
 ```sh
 nvm use
 npm ci
-npm run serve        # http://localhost:8000
-npm run worker:dev   # the Worker with a local database, http://localhost:8787
+npm run dev          # the game, a local Worker and a local database
 ```
 
-On `localhost` the app uses the local Worker. Before the first `worker:dev`, create the local database with `npx wrangler d1 migrations apply school-games --local --config worker/wrangler.jsonc`.
+`npm run dev` applies the database migrations locally, then serves the game on port 8000 and the Worker on port 8787. It prints the addresses to open: `http://localhost:8000/` on this computer and `http://<Wi-Fi address>:8000/` on a phone or tablet on the same Wi-Fi. Ctrl+C stops both.
+
+Manual testing never touches the real data: only the page served from `boryszef.github.io` talks to the production Worker. A page from any other address talks to the local Worker on that same address, and the production Worker refuses requests from local pages.
+
+- Phones need the computer's firewall to allow ports 8000 and 8787.
+- The browser keeps players per address, so `localhost` and the Wi-Fi address each have their own player.
+- `npm run dev:reset` wipes the local database (players, maze runs, wins). Stop `npm run dev` first. Players saved in browsers then no longer exist on the local Worker, so also clear the site data in those browsers.
 
 ES modules need to be served over HTTP, so opening `index.html` directly from disk won't work.
 

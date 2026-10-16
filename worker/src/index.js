@@ -5,10 +5,12 @@ import { createApp } from "./app.js";
  * @property {import("./db.js").Db} DB
  * @property {RateLimit} ROOMS_LIMIT
  * @property {RateLimit} PLAYERS_LIMIT
+ * @property {string} [DEV_ORIGINS] Comma-separated origins of the local pages; set only by
+ *   `npm run dev`, never on the deployed Worker.
  */
 /** @typedef {{limit: (options: {key: string}) => Promise<{success: boolean}>}} RateLimit */
 
-const ALLOWED_ORIGINS = ["https://boryszef.github.io", "http://localhost:8000"];
+const PUBLISHED_ORIGIN = "https://boryszef.github.io";
 /**
  * Creating rooms and players is limited per IP, without storing the IP.
  * @type {Map<string, "ROOMS_LIMIT" | "PLAYERS_LIMIT">}
@@ -25,7 +27,7 @@ export default {
    */
   async fetch(request, env) {
     const origin = request.headers.get("Origin");
-    if (origin !== null && !ALLOWED_ORIGINS.includes(origin)) {
+    if (!isAllowedOrigin(origin, env)) {
       return new Response(null, { status: 403 });
     }
     const cors = origin === null ? {} : _corsHeaders(origin);
@@ -44,6 +46,17 @@ export default {
     return response;
   },
 };
+
+/**
+ * Requests without an Origin header (curl, other servers) aren't from a browser page, so CORS
+ * doesn't apply to them.
+ * @param {string | null} origin
+ * @param {Pick<Env, "DEV_ORIGINS">} env
+ */
+export function isAllowedOrigin(origin, env) {
+  if (origin === null || origin === PUBLISHED_ORIGIN) return true;
+  return env.DEV_ORIGINS !== undefined && env.DEV_ORIGINS.split(",").includes(origin);
+}
 
 /** @param {string} origin */
 function _corsHeaders(origin) {
