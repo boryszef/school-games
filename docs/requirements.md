@@ -94,7 +94,7 @@ Education games is a static web app (HTML, CSS and ES-module JavaScript with no 
   - A win counts only when both reports for a match agree: each names the other, and exactly one won. Reports that disagree are discarded.
   - At most 3 wins per winner and opponent count per UTC day.
   - The prompt appears only when both players have an account.
-- R8.6 **Rankings.** `#/leaderboard` shows, for each game, the top 10 all-time and the top 10 this week (since Monday 00:00 UTC):
+- R8.6 **Rankings.** `#/leaderboard`, linked from the header (🏆) on every screen, shows, for each game, the top 10 all-time and the top 10 this week (since Monday 00:00 UTC):
   - Robot Maze: each player's best time, fastest first.
   - Tug of War: number of wins, most first.
   - The current player's row is highlighted.

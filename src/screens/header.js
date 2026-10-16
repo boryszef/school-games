@@ -28,6 +28,12 @@ export function renderHeader(header, app) {
 
   header.replaceChildren(
     h("a", { href: "#/", class: "brand" }, "🎓 ", t("app.title")),
+    h(
+      "a",
+      { href: "#/leaderboard", class: "leaderboard-link", "aria-label": t("header.leaderboard") },
+      "🏆",
+      h("span", { class: "leaderboard-label" }, t("header.leaderboard")),
+    ),
     h("a", { href: "#/players", class: "player-link" }, "👤 ", playerName),
     languages,
   );

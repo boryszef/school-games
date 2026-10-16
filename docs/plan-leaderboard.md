@@ -7,7 +7,7 @@
 - **Leaderboard prompt:** after a game, the player is asked "Add your score to the leaderboard?"
   - **Robot Maze:** the server measures the time. The Worker sends the maze seed when the round starts, then replays the moves when the player says yes. The official time is the server's clock plus 5 s per wrong answer.
   - **Tug of War:** both players are asked. A win counts only when both say yes and their reports agree, at most 3 wins per pair per UTC day.
-- **Leaderboard screen** `#/leaderboard`, linked from home: top 10 per game, all-time and this week.
+- **Leaderboard screen** `#/leaderboard`, linked from the header (🏆): top 10 per game, all-time and this week.
 - Everything stays on free tiers: GitHub Pages, a Cloudflare Worker and D1. No payment card is needed.
 
 ## Context

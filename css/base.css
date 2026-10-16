@@ -75,9 +75,25 @@ h1 {
   margin-right: auto;
 }
 
-.player-link {
+.player-link,
+.leaderboard-link {
   text-decoration: none;
   font-weight: 600;
+}
+
+.leaderboard-label {
+  margin-left: 4px;
+}
+
+/* On phones only the trophy shows; the link keeps its name for screen readers. */
+@media (max-width: 480px) {
+  .leaderboard-link {
+    font-size: 1.5rem;
+  }
+
+  .leaderboard-label {
+    display: none;
+  }
 }
 
 main {
@@ -309,11 +325,6 @@ select {
 
 .lb-prompt-status {
   min-height: 1.5em;
-}
-
-.home-leaderboard {
-  margin-top: 24px;
-  text-align: center;
 }
 
 .lb-section {

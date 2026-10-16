@@ -1,6 +1,7 @@
 export default {
   "app.title": "Gry edukacyjne",
   "header.choosePlayer": "Wybierz gracza",
+  "header.leaderboard": "Ranking",
   "header.language": "Język",
   "home.title": "Wybierz grę",
   "home.noPlayer": "Najpierw wybierz, kto gra.",
@@ -48,7 +49,6 @@ export default {
   "players.new": "Nowy gracz",
   "players.serverUnreachable":
     "Nie mogę połączyć się z serwerem gry. Sprawdź połączenie z internetem i spróbuj ponownie.",
-  "home.leaderboard": "🏆 Ranking",
   "leaderboard.title": "Ranking",
   "leaderboard.loading": "Wczytuję…",
   "leaderboard.unreachable":

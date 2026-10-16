@@ -1,6 +1,7 @@
 export default {
   "app.title": "Education games",
   "header.choosePlayer": "Choose player",
+  "header.leaderboard": "Leaderboard",
   "header.language": "Language",
   "home.title": "Choose a game",
   "home.noPlayer": "First choose who is playing.",
@@ -46,7 +47,6 @@ export default {
   "players.new": "New player",
   "players.serverUnreachable":
     "Can't reach the game server. Check your internet connection and try again.",
-  "home.leaderboard": "🏆 Leaderboard",
   "leaderboard.title": "Leaderboard",
   "leaderboard.loading": "Loading…",
   "leaderboard.unreachable": "Can't reach the game server. Check your internet connection.",
