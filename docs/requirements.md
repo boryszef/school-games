@@ -115,7 +115,7 @@ Education games is a static web app (HTML, CSS and ES-module JavaScript with no 
 - R9.4 A ship below the boxes starts under the middle column and moves one column at a time: ←/→ or A/D keys, on-screen ◀/▶ buttons, or tapping a column to move there. It cannot leave the board.
 - R9.5 The ship shoots with Space or the on-screen 🔥 button. A shot hits the lowest box of the column above the ship.
 - R9.6 The name of a target color is shown in the target language, in a neutral color. Hitting a box of that color pops it and gives +1 point. Hitting another color gives −1 point; the box stays and shakes. The score can go below zero.
-- R9.7 After every shot, hit or miss, a new target color is chosen at random, never the same as the previous one.
+- R9.7 After a correct hit, a new target color is chosen at random, never the same as the previous one. After a wrong shot the target stays until the child hits it.
 - R9.8 Popping the last box of a column gives a bonus of +5 points (on top of the +1), and the column refills with 5 boxes of the same color in the same place.
 - R9.9 A round lasts 60 s and starts as soon as the language is picked. The remaining time is shown. When it runs out, input stops and a result card shows the score, the number of correct hits, mistakes and cleared columns, with "Play again" (same language) and "Choose another game".
 - R9.10 Results are not stored and not sent to the leaderboard.

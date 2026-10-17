@@ -2,7 +2,7 @@
 
 ## Summary
 
-A new single-player game **Color Invasion / Kolorowa inwazja** (`color-invasion`, icon 👾). Ten columns of five boxes, one color per column (red, orange, yellow, green, blue, purple, pink, brown, black, white), sit at the top of the board. Their order is shuffled each round. A ship at the bottom moves one column per step and shoots the lowest box in the column above it. A color name in the chosen language (EN, DE or ES) is shown. A correct hit pops the box for +1. A wrong color costs −1: the box stays and shakes, and the score may go negative. After every shot a new color is picked, never the same one twice in a row. Popping the last box of a column gives +5 and refills that column. A round lasts 60 s and starts as soon as the language is picked. At the end a result card shows the score. Nothing is stored or sent to the leaderboard.
+A new single-player game **Color Invasion / Kolorowa inwazja** (`color-invasion`, icon 👾). Ten columns of five boxes, one color per column (red, orange, yellow, green, blue, purple, pink, brown, black, white), sit at the top of the board. Their order is shuffled each round. A ship at the bottom moves one column per step and shoots the lowest box in the column above it. A color name in the chosen language (EN, DE or ES) is shown. A correct hit pops the box for +1. A wrong color costs −1: the box stays and shakes, and the score may go negative. After a correct hit a new color is picked, never the same one twice in a row; after a miss the color stays. Popping the last box of a column gives +5 and refills that column. A round lasts 60 s and starts as soon as the language is picked. At the end a result card shows the score. Nothing is stored or sent to the leaderboard.
 
 ## Context
 
@@ -19,7 +19,7 @@ The project hosts learning games for kids (static ES modules, plug-in `GameDefin
 | Wrong shot      | −1, box stays (shake/red flash); score can go negative                                         |
 | Bonus           | Last box popped by a correct hit: +5, column refills with 5 boxes of the same color            |
 | Layout          | Column order shuffled at round start; refilled columns stay in place                           |
-| Target color    | New color after every shot, never the same as the previous one                                 |
+| Target color    | New color after a correct hit (never the previous one); a miss keeps it                        |
 | Round start     | Immediately after choosing the language; 60 s countdown                                        |
 
 The UI language stays pl/en (R2). The _target_ language (en/de/es) is a separate game setting. It is remembered in memory for the session, so "Play again" and coming back from home pre-select it. Keeping it across reloads would need a storage format change (R3.2/R3.3), so that is left as a follow-up if wanted.
@@ -38,7 +38,7 @@ Workflow (project rules): plan → requirements in `docs/` → failing tests for
   - Constants: `ROUND_MS = 60_000`, `BOXES_PER_COLUMN = 5`, `HIT_POINTS = 1`, `MISS_POINTS = -1`, `CLEAR_BONUS = 5`.
   - `createRound(rng)` → `{columns: [{color, boxes}], shipColumn, target, score, hits, misses, clears}`. Columns are shuffled with Fisher–Yates using `rng`, and the ship starts at the middle column.
   - `moveShip(state, "left" | "right")`: clamped at the edges, so it returns the same state when nothing moves. `moveShipTo(state, column)` handles taps.
-  - `shoot(state, rng)` → `{state, outcome}`. `outcome` is `"hit" | "clear" | "miss"`: it applies the scoring rules above, then picks the next target.
+  - `shoot(state, rng)` → `{state, outcome}`. `outcome` is `"hit" | "clear" | "miss"`: it applies the scoring rules above; a hit picks the next target, a miss keeps it.
   - `_pickTarget(previous, rng)`: a random color other than `previous`.
 - **`board.js`**: DOM view (`createBoard(onColumnTap)` → `{element, update(state), flash(outcome, column)}`). It uses a CSS grid of 10 columns × 5 rows plus the ship row. A short laser animation for the shot, a pop animation for a hit and a shake for a miss are purely visual: the state changes immediately. Black and white boxes get a border so they show in both color schemes.
 - **`index.js`**: `GameDefinition`. `mount` shows the language picker, then plays a round:
@@ -75,7 +75,7 @@ Workflow (project rules): plan → requirements in `docs/` → failing tests for
   - Correct shot: +1, the column loses 1 box, `hits` +1.
   - Wrong shot: −1, the boxes are unchanged, `misses` +1, and the score goes below 0 from 0.
   - Popping the last box: +1 +5, the column refills to 5 with the same color, `clears` +1.
-  - The target always changes after a shot, including a miss (many shots, never equal to the previous one).
+  - The target changes after every correct hit (never equal to the previous one) and stays after a miss.
 - `tests/color-invasion-colors.test.js`: each language names exactly the 10 color ids, with no empty or duplicate words within a language.
 - `tests/i18n.test.js`: add the pl/en key-parity test for the new dictionaries.
 

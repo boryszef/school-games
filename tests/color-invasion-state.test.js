@@ -102,15 +102,21 @@ test("popping the last box of a column gives the bonus and refills it", () => {
   assert.deepEqual(state.columns[column], { color, boxes: BOXES_PER_COLUMN });
 });
 
-test("every shot, hit or miss, picks a new target different from the previous one", () => {
+test("every correct hit picks a new target different from the previous one", () => {
   let state = createRound(createRng(1));
   const rng = createRng(3);
   const seen = new Set();
   for (let i = 0; i < 200; i++) {
-    const before = i % 2 === 0 ? aimed(state) : misaimed(state);
+    const before = aimed(moveShipTo(state, i % COLOR_IDS.length));
     state = shoot(before, rng).state;
     assert.notEqual(state.target, before.target);
     seen.add(state.target);
   }
   assert.equal(seen.size, COLOR_IDS.length);
+});
+
+test("a wrong shot keeps the target until the right color is hit", () => {
+  const before = misaimed(createRound(createRng(1)));
+  const { state } = shoot(shoot(before, createRng(2)).state, createRng(3));
+  assert.equal(state.target, before.target);
 });

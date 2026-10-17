@@ -76,17 +76,16 @@ export function moveShipTo(state, column) {
 }
 
 /**
- * Shoots the lowest box above the ship, then picks the next target.
+ * Shoots the lowest box above the ship. A correct hit picks the next target; a miss keeps it.
  * @param {RoundState} state
  * @param {Rng} rng
  * @returns {{state: RoundState, outcome: ShotOutcome}}
  */
 export function shoot(state, rng) {
   const column = state.columns[state.shipColumn];
-  const target = _pickTarget(state.target, rng);
   if (column.color !== state.target) {
     return {
-      state: { ...state, target, score: state.score + MISS_POINTS, misses: state.misses + 1 },
+      state: { ...state, score: state.score + MISS_POINTS, misses: state.misses + 1 },
       outcome: "miss",
     };
   }
@@ -100,7 +99,7 @@ export function shoot(state, rng) {
     state: {
       ...state,
       columns,
-      target,
+      target: _pickTarget(state.target, rng),
       score: state.score + HIT_POINTS + (cleared ? CLEAR_BONUS : 0),
       hits: state.hits + 1,
       clears: state.clears + (cleared ? 1 : 0),
