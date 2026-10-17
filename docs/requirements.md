@@ -2,41 +2,41 @@
 
 ## Summary
 
-Education games is a static web app (HTML, CSS and ES-module JavaScript with no runtime dependencies or backend) that hosts learning games for young kids. The first game, **Robot Maze**, practises the 10×10 multiplication table. The child walks through a 10×10 maze. Ten robots block the path to the exit, and each robot is disabled by typing the product of its cell's coordinates. A wrong answer costs 5 seconds. A faster time is a better result. Players get generated nicknames such as `RedFox1`. Their results and statistics are stored in the browser, and after a game a player can add the score to an online leaderboard. The UI is in Polish and English. The platform has a plug-in contract so more games can be added later. Two-player games connect two browsers directly over WebRTC. A small Cloudflare Worker only passes the connection details between them through a short room code (shown as a link and a QR code). The second game, **Tug of War**, is such a duel: both players get the same multiplication, and the faster correct answer tugs the rope. The third game, **Color Invasion**, trains color names in English, German and Spanish: the child steers a ship and shoots the box whose color matches the word shown. Sources: [plan.md](plan.md), [plan-tug-of-war.md](plan-tug-of-war.md), [plan-pvp-rooms.md](plan-pvp-rooms.md), [plan-leaderboard.md](plan-leaderboard.md), [plan-color-invasion.md](plan-color-invasion.md), [plan-color-invasion-leaderboard.md](plan-color-invasion-leaderboard.md).
+Education games is a static web app (HTML, CSS and ES-module JavaScript with no runtime dependencies or backend) that hosts learning games for young kids. The first game, **Robot Maze**, practises the 10×10 multiplication table. The child walks through a 10×10 maze. Ten robots block the path to the exit, and each robot is disabled by typing the product of its cell's coordinates. A wrong answer costs 5 seconds. A faster time is a better result. Players get generated nicknames such as `RedFox1`. Their results and statistics are stored in the browser, and after a game a player can add the score to an online leaderboard. The UI is in Polish and English. The platform has a plug-in contract so more games can be added later. Two-player games connect two browsers directly over WebRTC. A small Cloudflare Worker only passes the connection details between them through a short room code (shown as a link and a QR code). The second game, **Tug of War**, is such a duel: both players get the same multiplication, and the faster correct answer tugs the rope. The third game, **Color Invasion**, trains color names in English, German and Spanish: the child steers a ship and shoots the box whose color matches the word shown. Sources: [plan.md](plan.md), [plan-mobile-improvements.md](plan-mobile-improvements.md), [plan-tug-of-war.md](plan-tug-of-war.md), [plan-pvp-rooms.md](plan-pvp-rooms.md), [plan-leaderboard.md](plan-leaderboard.md), [plan-color-invasion.md](plan-color-invasion.md), [plan-color-invasion-leaderboard.md](plan-color-invasion-leaderboard.md).
 
 ## R1 – Platform
 
 - R1.1 The app is static files only, with one exception: the small Cloudflare Worker in `worker/` (free tier, R6), which accepts requests only from the app's own origins. Nothing is fetched from a CDN or installed from npm at runtime. Third-party code is allowed only as a vendored, licence-compatible file under `src/vendor/` with its source and licence noted in a header. It must be served over HTTP(S) because it uses ES modules.
 - R1.2 Hash routing: `#/` home (list of games), `#/players` (profiles), `#/leaderboard` (R8), `#/game/<id>` (a game) and `#/game/<id>/<arg>`, where `<arg>` is the rest of the hash, passed to the game.
 - R1.3 A game is a module that registers a `GameDefinition` (`id`, `titleKey`, `icon`, `messages: {pl, en}`, `mount(root, ctx) → unmount`). The `GameContext` passed to `mount` provides `player` (`{name, account}`), `t`, `recordRun(result)`, `exit()` and `arg` (the route's `<arg>`, or `null`). Adding a game means adding a folder under `src/games/` and one registration line.
-- R1.4 The on-screen number pad and direction pad are reusable core UI components.
+- R1.4 The on-screen number pad and the card shown over a game (results, questions, messages) are reusable core UI components.
 - R1.5 Logging goes through a small logger. Debug output is enabled with `?debug=1`.
 - R1.6 Only the page served from `boryszef.github.io` talks to the production Worker. A page served from any other host (`localhost`, `127.0.0.1`, the computer's Wi-Fi address) talks to `http://<that host>:8787`, the local Worker with its local database. The production Worker accepts only the `https://boryszef.github.io` origin. The local Worker also accepts the origins listed in `DEV_ORIGINS`, which `npm run dev` sets and the deployed Worker never has.
 
 ## R2 – Internationalisation
 
-- R2.1 Supported languages are Polish (default) and English. A switcher in the header changes the language, and the choice persists.
+- R2.1 Supported languages are Polish (default) and English. A switcher in the header (in the drawer on narrow screens, R10.6) changes the language, and the choice persists.
 - R2.2 Core and per-game dictionaries must define the same set of keys in each language.
 - R2.3 A game may teach words of another language (Color Invasion, R9). That _target_ language is chosen inside the game and is independent of the UI language.
 
 ## R3 – Players and persistence
 
 - R3.1 A browser keeps exactly one player. It is created once with the **New player** button and gets a nickname from the Worker (R8.1). There is no name input, and once the player exists the button is gone, so there is no adding or switching players. Creating the player needs internet; if the Worker can't be reached, "Can't reach the game server" is shown and the button can be pressed again. A game can only be started once the player exists. If a game link is opened before that, the app asks to create the player and then returns to that link.
-- R3.2 All state lives in `localStorage` under a single key `schoolGames` as `{version: 2, data}`.
-- R3.3 `data` holds `lang`, `player` (`null` until it is created) and `runs`. The player is `{name, createdAt, account?}`, where `name` is the nickname and `account` is `{id, token}` from the Worker. A run is `{gameId, finishedAt, timeMs, penaltyMs, mistakes}`, where `timeMs` includes the penalties and `mistakes` is a list of `[row, col]` pairs.
+- R3.2 All state lives in `localStorage` under a single key `schoolGames` as `{version: 3, data}`.
+- R3.3 `data` holds `lang`, `player` (`null` until it is created) and `runs`. The player is `{name, createdAt, account?}`, where `name` is the nickname and `account` is `{id, token}` from the Worker. A run is `{gameId, finishedAt, timeMs, penaltyMs}`, where `timeMs` includes the penalties.
 - R3.4 The best time per game is the minimum `timeMs` of the player's runs in that game.
-- R3.5 The most-missed products per game are the `[row, col]` pairs from the `mistakes` of the player's runs in that game, ranked by count (most frequent first). They are only displayed and don't affect gameplay.
-- R3.6 Version 1 data, which could hold several players, is migrated when loaded: the selected player (or, with none selected, the first one) and their runs are kept, and the other players and their runs are dropped. Data with any other unknown `version` is an error. It is not silently discarded.
+- R3.5 Wrong answers are not stored and the players page lists no mistakes. A game may count them during a round, such as the mistake count on Robot Maze's result card (R4.10).
+- R3.6 Older data is migrated when loaded. Version 1, which could hold several players, keeps the selected player (or, with none selected, the first one) and their runs, and drops the other players and their runs. Versions 1 and 2 stored each run's mistakes; those lists are dropped. Data with any other unknown `version` is an error. It is not silently discarded.
 
 ## R4 – Robot Maze rules
 
 - R4.1 The maze is a 10×10 perfect maze (every cell is reachable and there are no loops), freshly generated for every game. Rows and columns are numbered 1–10, and the numbers are shown along the top and left edges.
 - R4.2 The start is at (1,1) and the exit at (10,10).
 - R4.3 Exactly 10 robots are placed on distinct cells of the start→exit path, never on the start or the exit cell.
-- R4.4 The player moves one cell at a time with the arrow keys or WASD, the on-screen d-pad, or by tapping an adjacent cell. Moves through walls are ignored.
+- R4.4 The player moves one cell at a time with the arrow keys or WASD, or by tapping a neighbouring cell. There is no on-screen direction pad. Moves through walls are ignored.
 - R4.5 Moving into a cell with an active robot doesn't move the player. Instead it opens a challenge "row × col = ?".
 - R4.6 A correct answer disables the robot and moves the player into its cell. From then on the board shows the robot's product (e.g. `56`) in that cell instead of the robot, except while the player stands there.
-- R4.7 A wrong answer adds a 5000 ms penalty, records the `[row, col]` mistake and keeps the challenge open for a retry. The UI shows "try again" feedback.
+- R4.7 A wrong answer adds a 5000 ms penalty, counts as a mistake for this round and keeps the challenge open for a retry. The UI shows "try again" feedback.
 - R4.8 Answers are typed on the keyboard (`inputmode="numeric"`) or with the on-screen number pad.
 - R4.9 The timer starts when the maze appears and stops when the player reaches the exit. The displayed time includes penalties.
 - R4.10 The result screen shows the total time, the number of mistakes and whether it is a new personal best. It offers "Play again" and "Home".
@@ -126,3 +126,12 @@ Education games is a static web app (HTML, CSS and ES-module JavaScript with no 
 - R9.9 A round lasts 60 s and starts as soon as the language is picked. The remaining time is shown. When it runs out, input stops and a result card shows the score, the number of correct hits, mistakes and cleared columns, with "Play again" (same language) and "Choose another game".
 - R9.11 The score is shown centered, in its own row above the color word, a little bigger than the regular text but smaller than the color word. Every shot shows the change in points as a pop-up that rises from the score and fades: a small green "+1" for a correct hit, a big gold "+6" for a cleared column (hit plus bonus) and a big red "−1" for a wrong shot. On a bonus or a penalty the score itself also zooms and flashes gold or red. With reduced motion turned on in the system, the colors stay but nothing moves.
 - R9.10 Results are not stored in the browser. They are sent to the leaderboard as described in R8.6.
+
+## R10 – Phones and tablets
+
+- R10.1 The app is meant to be played on phones and tablets as much as on computers. Every screen works from 360 px wide in portrait, without scrolling sideways.
+- R10.2 Every game is playable by touch alone: Robot Maze by tapping neighbouring cells (R4.4) and the number pad (R4.8), Tug of War with the number pad (R7.7), Color Invasion with the on-screen buttons or by tapping a column (R9.4–R9.5). The phone's own keyboard is never needed.
+- R10.3 Buttons and other controls are at least 44 px tall. Maze cells are as big as the screen's width allows.
+- R10.4 Game controls don't zoom the page when tapped quickly twice.
+- R10.5 The number pad is used instead of the phone's keyboard: an answer field doesn't take the focus on a touch screen, so the phone's keyboard doesn't cover the pad.
+- R10.6 Below 600 px wide, the header shows only the app's title and a ☰ button. The button opens a drawer from the right with the leaderboard link, the player link and the language switcher. The drawer closes when a link in it is followed, when the player taps outside it, or with Esc. From 600 px up, the header shows these items in one row.
