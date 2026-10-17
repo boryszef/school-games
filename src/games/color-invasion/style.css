@@ -54,8 +54,12 @@
 
 .ci-board {
   display: grid;
+  --gap: 4px;
+  /* A box is as wide as its column: the board's content width split over the columns. */
+  --box: calc((100cqi - (var(--columns) - 1) * var(--gap)) / var(--columns));
+  container-type: inline-size;
   grid-template-columns: repeat(var(--columns), 1fr);
-  gap: 4px;
+  gap: var(--gap);
   padding: 8px;
   border-radius: var(--radius);
   background: #1b1d2e;
@@ -67,9 +71,9 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  /* Room for every box plus the gap a laser crosses on its way up. */
-  min-height: calc(var(--boxes) * 34px + 60px);
+  gap: var(--gap);
+  /* Room for a full column plus one empty row above the rocket. */
+  height: calc((var(--boxes) + 1) * var(--box) + var(--boxes) * var(--gap));
   cursor: pointer;
 }
 
