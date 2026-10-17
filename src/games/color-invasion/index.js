@@ -8,6 +8,7 @@ import { messages } from "./i18n.js";
 import { startServerRun, submitRun } from "./online.js";
 import { createLanguagePicker } from "./picker.js";
 import { createResultPanel } from "./result.js";
+import { createScoreDisplay } from "./score.js";
 import { ROUND_MS, createRound, moveShip, moveShipTo, shoot } from "./state.js";
 
 /** @typedef {import("../../core/registry.js").GameContext} GameContext */
@@ -90,7 +91,7 @@ function _playRound(root, ctx, { lang, run }, playAgain) {
   log.debug("color invasion round", lang, state.columns.map((c) => c.color).join());
   const timer = createTimer();
   const word = h("p", { class: "ci-word" });
-  const score = h("span", { class: "ci-score" });
+  const score = createScoreDisplay(t);
   const clock = h("span", { class: "ci-clock" });
   const board = createBoard(state.columns.length, (column) => {
     actions.push({ to: column });
@@ -103,7 +104,8 @@ function _playRound(root, ctx, { lang, run }, playAgain) {
       "div",
       { class: "ci" },
       h("p", { class: "ci-goal" }, t("colorInvasion.goal")),
-      h("p", { class: "ci-hud" }, clock, score),
+      h("p", { class: "ci-hud" }, clock),
+      score.element,
       h("p", { class: "ci-prompt" }, t("colorInvasion.shootThis")),
       word,
       stage,
@@ -139,8 +141,10 @@ function _playRound(root, ctx, { lang, run }, playAgain) {
     const column = state.shipColumn;
     const shot = shoot(state, rng);
     log.debug("shot", shot.outcome, "score", shot.state.score);
+    const points = shot.state.score - state.score;
     apply(shot.state);
     board.flash(shot.outcome, column);
+    score.react(shot.outcome, points);
   }
 
   /** @param {RoundState} next */
@@ -151,7 +155,7 @@ function _playRound(root, ctx, { lang, run }, playAgain) {
 
   function render() {
     word.textContent = COLOR_NAMES[lang][state.target];
-    score.textContent = t("colorInvasion.score", { score: state.score });
+    score.show(state.score);
     board.update(state);
     tick();
   }

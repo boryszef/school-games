@@ -32,12 +32,129 @@
 }
 
 .ci-hud {
-  display: flex;
-  gap: 24px;
   margin: 0;
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   font-weight: 700;
+  color: var(--muted);
   font-variant-numeric: tabular-nums;
+}
+
+.ci-score-row {
+  width: 100%;
+  margin: 4px 0 0;
+  /* A pop-up beside a wide score must not make a phone's page scroll sideways. */
+  overflow-x: clip;
+}
+
+.ci-score-anchor {
+  position: relative;
+  display: inline-block;
+}
+
+.ci-score {
+  display: inline-block;
+  font-size: 1.3rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.ci-score.is-bonus {
+  animation: ci-bonus 500ms ease-out;
+}
+
+.ci-score.is-penalty {
+  animation: ci-penalty 500ms ease-out;
+}
+
+@keyframes ci-bonus {
+  30% {
+    transform: scale(1.25);
+    color: #f9a825;
+  }
+}
+
+@keyframes ci-penalty {
+  30% {
+    transform: scale(1.25);
+    color: var(--danger);
+  }
+}
+
+/* Rises beside the score and fades; it never catches taps meant for the board. */
+.ci-popup {
+  position: absolute;
+  /* Clear of the score's edge while it zooms by 1.25 (an eighth of its width per side). */
+  left: calc(112.5% + 8px);
+  top: 0;
+  font-weight: 900;
+  pointer-events: none;
+  white-space: nowrap;
+  animation: ci-rise 800ms ease-out forwards;
+}
+
+.ci-popup.is-hit {
+  font-size: 1.2rem;
+  color: #43a047;
+}
+
+.ci-popup.is-clear {
+  font-size: 2rem;
+  color: #f9a825;
+}
+
+.ci-popup.is-miss {
+  font-size: 2rem;
+  color: var(--danger);
+}
+
+@keyframes ci-rise {
+  from {
+    transform: translateY(10px) scale(0.6);
+    opacity: 1;
+  }
+  25% {
+    transform: translateY(0) scale(1.1);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(-30px) scale(1);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ci-score.is-bonus {
+    animation-name: ci-bonus-still;
+  }
+
+  .ci-score.is-penalty {
+    animation-name: ci-penalty-still;
+  }
+
+  .ci-popup {
+    animation-name: ci-fade-only;
+  }
+}
+
+@keyframes ci-bonus-still {
+  30% {
+    color: #f9a825;
+  }
+}
+
+@keyframes ci-penalty-still {
+  30% {
+    color: var(--danger);
+  }
+}
+
+@keyframes ci-fade-only {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
 }
 
 .ci-prompt {
