@@ -1,8 +1,8 @@
-# Requirements: Education games platform, "Robot Maze" and "Tug of War"
+# Requirements: Education games platform, "Robot Maze", "Tug of War" and "Color Invasion"
 
 ## Summary
 
-Education games is a static web app (HTML, CSS and ES-module JavaScript with no runtime dependencies or backend) that hosts learning games for young kids. The first game, **Robot Maze**, practises the 10×10 multiplication table. The child walks through a 10×10 maze. Ten robots block the path to the exit, and each robot is disabled by typing the product of its cell's coordinates. A wrong answer costs 5 seconds. A faster time is a better result. Players get generated nicknames such as `RedFox1`. Their results and statistics are stored in the browser, and after a game a player can add the score to an online leaderboard. The UI is in Polish and English. The platform has a plug-in contract so more games can be added later. Two-player games connect two browsers directly over WebRTC. A small Cloudflare Worker only passes the connection details between them through a short room code (shown as a link and a QR code). The second game, **Tug of War**, is such a duel: both players get the same multiplication, and the faster correct answer tugs the rope. Sources: [plan.md](plan.md), [plan-tug-of-war.md](plan-tug-of-war.md), [plan-pvp-rooms.md](plan-pvp-rooms.md), [plan-leaderboard.md](plan-leaderboard.md).
+Education games is a static web app (HTML, CSS and ES-module JavaScript with no runtime dependencies or backend) that hosts learning games for young kids. The first game, **Robot Maze**, practises the 10×10 multiplication table. The child walks through a 10×10 maze. Ten robots block the path to the exit, and each robot is disabled by typing the product of its cell's coordinates. A wrong answer costs 5 seconds. A faster time is a better result. Players get generated nicknames such as `RedFox1`. Their results and statistics are stored in the browser, and after a game a player can add the score to an online leaderboard. The UI is in Polish and English. The platform has a plug-in contract so more games can be added later. Two-player games connect two browsers directly over WebRTC. A small Cloudflare Worker only passes the connection details between them through a short room code (shown as a link and a QR code). The second game, **Tug of War**, is such a duel: both players get the same multiplication, and the faster correct answer tugs the rope. The third game, **Color Invasion**, trains color names in English, German and Spanish: the child steers a ship and shoots the box whose color matches the word shown. Sources: [plan.md](plan.md), [plan-tug-of-war.md](plan-tug-of-war.md), [plan-pvp-rooms.md](plan-pvp-rooms.md), [plan-leaderboard.md](plan-leaderboard.md), [plan-color-invasion.md](plan-color-invasion.md).
 
 ## R1 – Platform
 
@@ -17,6 +17,7 @@ Education games is a static web app (HTML, CSS and ES-module JavaScript with no 
 
 - R2.1 Supported languages are Polish (default) and English. A switcher in the header changes the language, and the choice persists.
 - R2.2 Core and per-game dictionaries must define the same set of keys in each language.
+- R2.3 A game may teach words of another language (Color Invasion, R9). That _target_ language is chosen inside the game and is independent of the UI language.
 
 ## R3 – Players and persistence
 
@@ -43,7 +44,7 @@ Education games is a static web app (HTML, CSS and ES-module JavaScript with no 
 
 ## R5 – Quality
 
-- R5.1 The pure logic (maze, path, robots, game state, profiles, storage, i18n parity, room codes, nicknames, the Worker's rooms, players, maze runs, duels and leaderboard, Tug of War rules and message validation) is unit-tested with `node --test`.
+- R5.1 The pure logic (maze, path, robots, game state, profiles, storage, i18n parity, room codes, nicknames, the Worker's rooms, players, maze runs, duels and leaderboard, Tug of War rules and message validation, Color Invasion rules and vocabulary) is unit-tested with `node --test`.
 - R5.2 Pre-commit hooks run Prettier, ESLint, `tsc --checkJs` (JSDoc types), knip (dead code) and the tests.
 - R5.3 The Node version is managed through nvm (`.nvmrc`).
 
@@ -102,3 +103,19 @@ Education games is a static web app (HTML, CSS and ES-module JavaScript with no 
   - The current player's row is highlighted.
   - The list is never cached, so a score shows as soon as it has been added.
 - R8.7 **Privacy.** No real names are stored: nicknames are generated. The Worker stores no IP addresses, and keeps only a hash of each token. The token is sent only to the Worker and never to the other player; the other player sees only the public id.
+
+## R9 – Color Invasion rules
+
+- R9.1 **Color Invasion** (`color-invasion`, icon 👾) is a single-player game that trains color names. Before each round the child picks the target language: English, Deutsch or Español (each shown in its own language). The choice is remembered until the page is reloaded and pre-selected next time.
+- R9.2 The board has 10 columns, one per color: red, orange, yellow, green, blue, purple, pink, brown, black, white. Each column starts with 5 boxes. The column order is shuffled at the start of every round.
+- R9.3 The color names are:
+  - English: red, orange, yellow, green, blue, purple, pink, brown, black, white
+  - German: rot, orange, gelb, grün, blau, lila, rosa, braun, schwarz, weiß
+  - Spanish: rojo, naranja, amarillo, verde, azul, morado, rosa, marrón, negro, blanco
+- R9.4 A ship below the boxes starts under the middle column and moves one column at a time: ←/→ or A/D keys, on-screen ◀/▶ buttons, or tapping a column to move there. It cannot leave the board.
+- R9.5 The ship shoots with Space or the on-screen 🔥 button. A shot hits the lowest box of the column above the ship.
+- R9.6 The name of a target color is shown in the target language, in a neutral color. Hitting a box of that color pops it and gives +1 point. Hitting another color gives −1 point; the box stays and shakes. The score can go below zero.
+- R9.7 After every shot, hit or miss, a new target color is chosen at random, never the same as the previous one.
+- R9.8 Popping the last box of a column gives a bonus of +5 points (on top of the +1), and the column refills with 5 boxes of the same color in the same place.
+- R9.9 A round lasts 60 s and starts as soon as the language is picked. The remaining time is shown. When it runs out, input stops and a result card shows the score, the number of correct hits, mistakes and cleared columns, with "Play again" (same language) and "Choose another game".
+- R9.10 Results are not stored and not sent to the leaderboard.

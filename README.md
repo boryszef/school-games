@@ -98,7 +98,7 @@ A two-player game calls `openLobby(root, {gameId, arg: ctx.arg, t})` from `src/c
 
 ### Emoji font
 
-`fonts/emoji-subset.woff2` is a 10 KB subset of [Noto Color Emoji](https://github.com/googlefonts/noto-emoji) (OFL 1.1). It contains only the emoji the app uses, for devices without their own emoji font. If you add a new emoji to the UI, rebuild the font with the command in `css/base.css` and extend its `unicode-range`.
+`fonts/emoji-subset.woff2` is a 12 KB subset of [Noto Color Emoji](https://github.com/googlefonts/noto-emoji) (OFL 1.1). It contains only the emoji the app uses, for devices without their own emoji font. If you add a new emoji to the UI, rebuild the font with the command in `css/base.css` and extend its `unicode-range`.
 
 ## Deployment
 

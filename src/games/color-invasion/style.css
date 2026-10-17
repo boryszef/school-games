@@ -1,0 +1,203 @@
+.ci,
+.ci-picker {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.ci-picker {
+  gap: 12px;
+}
+
+.ci-language {
+  width: min(100%, 260px);
+  font-size: 1.3rem;
+}
+
+.ci-language.is-last {
+  outline: 3px solid var(--highlight);
+  outline-offset: 2px;
+}
+
+.ci-goal {
+  max-width: 560px;
+  margin-top: 0;
+  color: var(--muted);
+}
+
+.ci-hud {
+  display: flex;
+  gap: 24px;
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.ci-prompt {
+  margin: 12px 0 0;
+  color: var(--muted);
+}
+
+/* Never painted in the target color: the child has to read the word. */
+.ci-word {
+  margin: 0 0 12px;
+  font-size: clamp(2rem, 9vw, 3rem);
+  font-weight: 800;
+  color: var(--text);
+}
+
+.ci-stage {
+  width: min(100%, 560px);
+}
+
+.ci-board {
+  display: grid;
+  grid-template-columns: repeat(var(--columns), 1fr);
+  gap: 4px;
+  padding: 8px;
+  border-radius: var(--radius);
+  background: #1b1d2e;
+  user-select: none;
+  touch-action: manipulation;
+}
+
+.ci-column {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  /* Room for every box plus the gap a laser crosses on its way up. */
+  min-height: calc(var(--boxes) * 34px + 60px);
+  cursor: pointer;
+}
+
+.ci-box {
+  aspect-ratio: 1;
+  border: 2px solid rgb(255 255 255 / 0.35);
+  border-radius: 6px;
+}
+
+.ci-ship-cell {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 44px;
+  cursor: pointer;
+}
+
+.ci-ship {
+  font-size: clamp(1.4rem, 6vw, 2.2rem);
+  /* The emoji points up and to the right. */
+  transform: rotate(-45deg);
+}
+
+/* The laser rises from the bottom of the column to its lowest box. */
+.ci-column::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: calc(50% - 2px);
+  width: 4px;
+  height: 0;
+  background: #fff176;
+  opacity: 0;
+}
+
+.ci-column.is-hit::after,
+.ci-column.is-clear::after,
+.ci-column.is-miss::after {
+  animation: ci-laser 250ms ease-out;
+}
+
+@keyframes ci-laser {
+  from {
+    height: 0;
+    opacity: 1;
+  }
+  to {
+    height: 100%;
+    opacity: 0;
+  }
+}
+
+.ci-column.is-miss .ci-box:last-child {
+  animation: ci-shake 400ms;
+}
+
+@keyframes ci-shake {
+  0%,
+  80% {
+    box-shadow: 0 0 0 3px var(--danger);
+  }
+  25% {
+    transform: translateX(-4px);
+  }
+  75% {
+    transform: translateX(4px);
+  }
+}
+
+.ci-column.is-clear .ci-box {
+  animation: ci-refill 400ms ease-out;
+}
+
+@keyframes ci-refill {
+  from {
+    transform: scale(0);
+  }
+}
+
+.ci-controls {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr 1fr;
+  gap: 8px;
+  width: min(100%, 360px);
+  margin-top: 16px;
+  touch-action: manipulation;
+}
+
+.ci-control {
+  min-height: 60px;
+  font-size: 1.6rem;
+  background: var(--surface);
+  color: var(--text);
+  border: 2px solid var(--border);
+}
+
+.ci-shoot {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.ci-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgb(0 0 0 / 0.35);
+}
+
+.ci-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: min(90%, 300px);
+  padding: 16px;
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.ci-card h2,
+.ci-card p {
+  margin: 0;
+}
+
+.ci-final-score {
+  font-size: 1.6rem;
+  font-weight: 700;
+}
