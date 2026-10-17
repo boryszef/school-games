@@ -3,9 +3,35 @@ import { TARGET_LANGUAGES } from "../../src/games/color-invasion/colors.js";
 
 /** @typedef {import("./db.js").Db} Db */
 /** @typedef {import("./http.js").Reply} Reply */
-/** @typedef {import("../../src/games/robot-maze/state.js").Level} Level */
+
+/**
+ * Where a "best run per player" ranking comes from. Every name is a constant in the code,
+ * never input.
+ * @typedef {object} BestRunQuery
+ * @property {string} table
+ * @property {string} variant The column that splits the rankings, such as the level.
+ * @property {string} value The column ranked on.
+ * @property {"ASC" | "DESC"} order
+ * @property {string} field What the value is called in the response.
+ */
 
 const TOP = 10;
+/** @type {BestRunQuery} */
+const MAZE_TIMES = {
+  table: "maze_runs",
+  variant: "level",
+  value: "time_ms",
+  order: "ASC",
+  field: "timeMs",
+};
+/** @type {BestRunQuery} */
+const COLOR_SCORES = {
+  table: "color_runs",
+  variant: "lang",
+  value: "score",
+  order: "DESC",
+  field: "score",
+};
 const DAY_MS = 24 * 60 * 60 * 1000;
 /** Always fresh: a cached copy would hide a record the player has just added. */
 const CACHE_CONTROL = "no-store";
@@ -16,50 +42,28 @@ const CACHE_CONTROL = "no-store";
  */
 export function createLeaderboard({ db, now }) {
   /**
-   * Each player's best time on a level (the earlier run on a tie), fastest first.
-   * @param {Level} level
+   * Each player's best finished run of one kind (the earlier run on a tie), best first.
+   * @param {BestRunQuery} query
+   * @param {string} variantValue Such as the maze level or the color language.
    * @param {number} since
    */
-  const mazeTop = async (level, since) => {
+  const bestPerPlayer = async ({ table, variant, value, order, field }, variantValue, since) => {
     const { results } = await db
       .prepare(
-        `SELECT p.color, p.animal, p.number, best.time_ms
-         FROM (SELECT player_id, time_ms, finished_at,
-                 ROW_NUMBER() OVER (PARTITION BY player_id ORDER BY time_ms, finished_at) AS place
-               FROM maze_runs
-               WHERE level = ? AND finished_at IS NOT NULL AND finished_at >= ?) AS best
+        `SELECT p.color, p.animal, p.number, best.${value} AS value
+         FROM (SELECT player_id, ${value}, finished_at,
+                 ROW_NUMBER() OVER (PARTITION BY player_id ORDER BY ${value} ${order}, finished_at)
+                   AS place
+               FROM ${table}
+               WHERE ${variant} = ? AND finished_at IS NOT NULL AND finished_at >= ?) AS best
          JOIN players AS p ON p.id = best.player_id
          WHERE best.place = 1
-         ORDER BY best.time_ms, best.finished_at
+         ORDER BY best.${value} ${order}, best.finished_at
          LIMIT ?`,
       )
-      .bind(level, since, TOP)
+      .bind(variantValue, since, TOP)
       .all();
-    return results.map((row) => ({ nickname: _nickname(row), timeMs: Number(row.time_ms) }));
-  };
-
-  /**
-   * Each player's best Color Invasion score in a language (the earlier round on a tie),
-   * highest first.
-   * @param {string} lang
-   * @param {number} since
-   */
-  const colorTop = async (lang, since) => {
-    const { results } = await db
-      .prepare(
-        `SELECT p.color, p.animal, p.number, best.score
-         FROM (SELECT player_id, score, finished_at,
-                 ROW_NUMBER() OVER (PARTITION BY player_id ORDER BY score DESC, finished_at) AS place
-               FROM color_runs
-               WHERE lang = ? AND finished_at IS NOT NULL AND finished_at >= ?) AS best
-         JOIN players AS p ON p.id = best.player_id
-         WHERE best.place = 1
-         ORDER BY best.score DESC, best.finished_at
-         LIMIT ?`,
-      )
-      .bind(lang, since, TOP)
-      .all();
-    return results.map((row) => ({ nickname: _nickname(row), score: Number(row.score) }));
+    return results.map((row) => ({ nickname: _nickname(row), [field]: Number(row.value) }));
   };
 
   /** Most wins first; on a tie, whoever got there first. */
@@ -82,20 +86,22 @@ export function createLeaderboard({ db, now }) {
     /** @returns {Promise<Reply>} */
     async get() {
       const week = _weekStart(now());
+      /** @param {(since: number) => Promise<object[]>} top */
+      const rankings = async (top) => ({ allTime: await top(0), week: await top(week) });
+      /** @param {string} lang */
+      const colorRankings = async (lang) => [
+        lang,
+        await rankings((since) => bestPerPlayer(COLOR_SCORES, lang, since)),
+      ];
       return {
         status: 200,
         headers: { "Cache-Control": CACHE_CONTROL },
         body: {
-          maze: { allTime: await mazeTop("standard", 0), week: await mazeTop("standard", week) },
-          mazeHard: { allTime: await mazeTop("hard", 0), week: await mazeTop("hard", week) },
-          duels: { allTime: await duelTop(0), week: await duelTop(week) },
+          maze: await rankings((since) => bestPerPlayer(MAZE_TIMES, "standard", since)),
+          mazeHard: await rankings((since) => bestPerPlayer(MAZE_TIMES, "hard", since)),
+          duels: await rankings(duelTop),
           colors: Object.fromEntries(
-            await Promise.all(
-              Object.keys(TARGET_LANGUAGES).map(async (lang) => [
-                lang,
-                { allTime: await colorTop(lang, 0), week: await colorTop(lang, week) },
-              ]),
-            ),
+            await Promise.all(Object.keys(TARGET_LANGUAGES).map(colorRankings)),
           ),
         },
       };
