@@ -32,6 +32,8 @@ export function createBoard(columnCount, onColumnTap) {
     /** @param {RoundState} state */
     update(state) {
       state.columns.forEach(({ color, boxes }, i) => {
+        // Unchanged columns keep their elements, or a running refill/shake would restart.
+        if (columns[i].children.length === boxes) return;
         const box = () =>
           h("div", { class: "ci-box", style: `background: ${CSS_COLORS.get(color)}` });
         columns[i].replaceChildren(...Array.from({ length: boxes }, box));
