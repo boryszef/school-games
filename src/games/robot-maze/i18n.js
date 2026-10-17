@@ -1,7 +1,6 @@
 export const messages = {
   pl: {
     "robotMaze.title": "Labirynt robotów",
-    "robotMaze.hardTitle": "Labirynt robotów – trudny",
     "robotMaze.goal":
       "Dojdź do flagi 🏁. Robot przepuści cię, gdy pomnożysz numer wiersza przez numer kolumny.",
     "robotMaze.time": "Czas",
@@ -20,7 +19,6 @@ export const messages = {
   },
   en: {
     "robotMaze.title": "Robot Maze",
-    "robotMaze.hardTitle": "Robot Maze – hard",
     "robotMaze.goal":
       "Reach the flag 🏁. A robot lets you pass when you multiply the row number by the column number.",
     "robotMaze.time": "Time",

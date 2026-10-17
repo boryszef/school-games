@@ -15,7 +15,6 @@ import { TARGET_LANGUAGES } from "../games/color-invasion/colors.js";
 /**
  * @typedef {object} Leaderboard
  * @property {Rankings<MazeEntry>} maze
- * @property {Rankings<MazeEntry>} mazeHard
  * @property {Rankings<DuelEntry>} duels
  * @property {Record<TargetLanguage, Rankings<ColorEntry>>} colors One ranking per language.
  */
@@ -58,7 +57,6 @@ function _sections(app, board) {
   const languages = /** @type {[TargetLanguage, string][]} */ (Object.entries(TARGET_LANGUAGES));
   return [
     _section(t, "🤖 " + t("robotMaze.title"), board.maze, t("leaderboard.time"), time, me),
-    _section(t, "🦾 " + t("robotMaze.hardTitle"), board.mazeHard, t("leaderboard.time"), time, me),
     _section(t, "🪢 " + t("tugOfWar.title"), board.duels, t("leaderboard.wins"), wins, me),
     ...languages.map(([lang, name]) =>
       _section(

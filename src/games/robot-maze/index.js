@@ -47,14 +47,6 @@ export const robotMaze = _robotMaze({
   level: "standard",
 });
 
-/** The same game on a 20×20 maze; it has its own stats and rankings (R4.11). */
-export const robotMazeHard = _robotMaze({
-  id: "robot-maze-hard",
-  titleKey: "robotMaze.hardTitle",
-  icon: "🦾",
-  level: "hard",
-});
-
 /**
  * @param {{id: string, titleKey: string, icon: string, level: Level}} options
  * @returns {import("../../core/registry.js").GameDefinition}
