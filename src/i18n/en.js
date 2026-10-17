@@ -16,8 +16,6 @@ export default {
   "notFound.back": "Back to games",
   "numpad.delete": "Delete digit",
   "numpad.submit": "Check",
-  "controls.left": "Left",
-  "controls.right": "Right",
   "lobby.inviteTitle": "Invite a friend",
   "lobby.preparing": "Preparing…",
   "lobby.inviteHelp":

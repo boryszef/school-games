@@ -150,3 +150,16 @@ test("when the Worker can't be reached at the start, the round is played locally
   await until(roundOver(root));
   assert.ok(!cardText(root).includes("Added!"));
 });
+
+test("the only on-screen control is the shoot button", async () => {
+  goOffline();
+  const root = dom.document.createElement("main");
+  unmount = colorInvasion.mount(root, gameContext(messages.en, { name: "Tester", account: null }));
+  startSpanish(root);
+  await until(boardShown(root));
+  const buttons = [...root.querySelectorAll(".ci-controls button")];
+  assert.deepEqual(
+    buttons.map((b) => b.getAttribute("aria-label")),
+    ["Shoot"],
+  );
+});

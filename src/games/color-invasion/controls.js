@@ -29,32 +29,25 @@ export function listenForKeys(onCommand) {
 }
 
 /**
- * On-screen ◀ 🔥 ▶ buttons. They don't take focus, so Space never also presses one.
+ * The on-screen 🔥 button; the ship moves by tapping a column (R9.4). It doesn't take focus, so
+ * Space never also presses it.
  * @param {import("../../core/i18n.js").Translate} t
  * @param {(command: Command) => void} onCommand
  */
 export function createControls(t, onCommand) {
-  /** @type {[Command, string, string][]} */
-  const buttons = [
-    ["left", "◀", t("controls.left")],
-    ["shoot", "🔥", t("colorInvasion.shoot")],
-    ["right", "▶", t("controls.right")],
-  ];
   return h(
     "div",
     { class: "ci-controls" },
-    ...buttons.map(([command, label, name]) =>
-      h(
-        "button",
-        {
-          type: "button",
-          class: `ci-control ci-${command}`,
-          "aria-label": name,
-          onmousedown: (event) => event.preventDefault(),
-          onclick: () => onCommand(command),
-        },
-        label,
-      ),
+    h(
+      "button",
+      {
+        type: "button",
+        class: "ci-control ci-shoot",
+        "aria-label": t("colorInvasion.shoot"),
+        onmousedown: (event) => event.preventDefault(),
+        onclick: () => onCommand("shoot"),
+      },
+      "🔥",
     ),
   );
 }

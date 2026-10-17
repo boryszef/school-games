@@ -16,8 +16,6 @@ export default {
   "notFound.back": "Wróć do gier",
   "numpad.delete": "Usuń cyfrę",
   "numpad.submit": "Sprawdź",
-  "controls.left": "W lewo",
-  "controls.right": "W prawo",
   "lobby.inviteTitle": "Zaproś kolegę lub koleżankę",
   "lobby.preparing": "Przygotowuję…",
   "lobby.inviteHelp":

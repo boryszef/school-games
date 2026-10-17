@@ -118,7 +118,7 @@ Education games is a static web app (HTML, CSS and ES-module JavaScript with no 
   - English: red, orange, yellow, green, blue, purple, pink, brown, black, white
   - German: rot, orange, gelb, grün, blau, lila, rosa, braun, schwarz, weiß
   - Spanish: rojo, naranja, amarillo, verde, azul, morado, rosa, marrón, negro, blanco
-- R9.4 A ship below the boxes starts under the middle column and moves one column at a time: ←/→ or A/D keys, on-screen ◀/▶ buttons, or tapping a column to move there. It cannot leave the board.
+- R9.4 A ship below the boxes starts under the middle column and moves one column at a time with the ←/→ or A/D keys, or jumps to a column when it is tapped. There are no on-screen arrow buttons. It cannot leave the board.
 - R9.5 The ship shoots with Space or the on-screen 🔥 button. A shot hits the lowest box of the column above the ship.
 - R9.6 The name of a target color is shown in the target language, in a neutral color. Hitting a box of that color pops it and gives +1 point. Hitting another color gives −1 point; the box stays and shakes. The score can go below zero.
 - R9.7 After a correct hit, a new target color is chosen at random, never the same as the previous one. After a wrong shot the target stays until the child hits it.
@@ -130,7 +130,7 @@ Education games is a static web app (HTML, CSS and ES-module JavaScript with no 
 ## R10 – Phones and tablets
 
 - R10.1 The app is meant to be played on phones and tablets as much as on computers. Every screen works from 360 px wide in portrait, without scrolling sideways.
-- R10.2 Every game is playable by touch alone: Robot Maze by tapping neighbouring cells (R4.4) and the number pad (R4.8), Tug of War with the number pad (R7.7), Color Invasion with the on-screen buttons or by tapping a column (R9.4–R9.5). The phone's own keyboard is never needed.
+- R10.2 Every game is playable by touch alone: Robot Maze by tapping neighbouring cells (R4.4) and the number pad (R4.8), Tug of War with the number pad (R7.7), Color Invasion by tapping a column and the 🔥 button (R9.4–R9.5). The phone's own keyboard is never needed.
 - R10.3 Buttons and other controls are at least 44 px tall. Maze cells are as big as the screen's width allows.
 - R10.4 Game controls don't zoom the page when tapped quickly twice.
 - R10.5 The number pad is used instead of the phone's keyboard: an answer field doesn't take the focus on a touch screen, so the phone's keyboard doesn't cover the pad.

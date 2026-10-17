@@ -277,8 +277,6 @@
 
 .ci-controls {
   display: grid;
-  grid-template-columns: 1fr 1.4fr 1fr;
-  gap: 8px;
   width: min(100%, 360px);
   margin-top: 16px;
   touch-action: manipulation;
