@@ -4,31 +4,21 @@ import { createRng } from "../../core/random.js";
 import { createTimer } from "../../core/timer.js";
 import { h, loadStylesheet } from "../../core/ui/dom.js";
 import { submitToLeaderboard } from "../../core/ui/leaderboard-submit.js";
-import { createBoard } from "./board.js";
-import { COLOR_NAMES } from "./colors.js";
+import { listenForKeys } from "./controls.js";
 import { messages } from "./i18n.js";
 import { createLanguagePicker } from "./picker.js";
 import { createResultPanel } from "./result.js";
-import { createScoreDisplay } from "./score.js";
 import { ROUND_MS, createRound, moveShip, moveShipTo, shoot } from "./state.js";
+import { createRoundView } from "./view.js";
 
 /** @typedef {import("../../core/registry.js").GameContext} GameContext */
 /** @typedef {import("./colors.js").TargetLanguage} TargetLanguage */
 /** @typedef {import("./state.js").RoundState} RoundState */
-/** @typedef {"left" | "right" | "shoot"} Command */
+/** @typedef {import("./controls.js").Command} Command */
 /** @typedef {Command | {to: number}} Action Recorded for the Worker's replay (R8.6). */
 /** @typedef {import("../../core/online/server-run.js").ServerRun} ServerRun */
 
 const CLOCK_REFRESH_MS = 100;
-
-/** @type {Record<string, Command>} */
-const KEY_COMMANDS = {
-  ArrowLeft: "left",
-  ArrowRight: "right",
-  a: "left",
-  d: "right",
-  " ": "shoot",
-};
 
 /** Remembered until the page is reloaded (R9.1). */
 /** @type {TargetLanguage | null} */
@@ -91,48 +81,25 @@ function _playRound(root, ctx, { lang, run }, playAgain) {
   const actions = [];
   log.debug("color invasion round", lang, state.columns.map((c) => c.color).join());
   const timer = createTimer();
-  const word = h("p", { class: "ci-word" });
-  const score = createScoreDisplay(t);
-  const clock = h("span", { class: "ci-clock" });
-  const board = createBoard(state.columns.length, (column) => {
-    actions.push({ to: column });
-    apply(moveShipTo(state, column));
+  const view = createRoundView(root, {
+    t,
+    lang,
+    columnCount: state.columns.length,
+    onCommand: runCommand,
+    onColumnTap: (column) => {
+      actions.push({ to: column });
+      apply(moveShipTo(state, column));
+    },
   });
-  const stage = h("div", { class: "ci-stage" }, board.element);
-
-  root.replaceChildren(
-    h(
-      "div",
-      { class: "ci" },
-      h("p", { class: "ci-goal" }, t("colorInvasion.goal")),
-      h("p", { class: "ci-hud" }, clock),
-      score.element,
-      h("p", { class: "ci-prompt" }, t("colorInvasion.shootThis")),
-      word,
-      stage,
-      _createControls(t, runCommand),
-    ),
-  );
   timer.start();
-  render();
+  apply(state);
   const ticker = setInterval(tick, CLOCK_REFRESH_MS);
-  window.addEventListener("keydown", onKey);
-
-  function remainingMs() {
-    return Math.max(0, ROUND_MS - timer.elapsedMs());
-  }
+  const stopKeys = listenForKeys(runCommand);
 
   function tick() {
-    clock.textContent = t("colorInvasion.timeLeft", { seconds: Math.ceil(remainingMs() / 1000) });
-    if (remainingMs() === 0) finish();
-  }
-
-  /** @param {KeyboardEvent} event */
-  function onKey(event) {
-    const command = KEY_COMMANDS[event.key];
-    if (command === undefined) return;
-    event.preventDefault();
-    runCommand(command);
+    const remainingMs = Math.max(0, ROUND_MS - timer.elapsedMs());
+    view.showTime(remainingMs);
+    if (remainingMs === 0) finish();
   }
 
   /** @param {Command} command */
@@ -144,27 +111,20 @@ function _playRound(root, ctx, { lang, run }, playAgain) {
     log.debug("shot", shot.outcome, "score", shot.state.score);
     const points = shot.state.score - state.score;
     apply(shot.state);
-    board.flash(shot.outcome, column);
-    score.react(shot.outcome, points);
+    view.showShot(shot.outcome, column, points);
   }
 
   /** @param {RoundState} next */
   function apply(next) {
     state = next;
-    render();
-  }
-
-  function render() {
-    word.textContent = COLOR_NAMES[lang][state.target];
-    score.show(state.score);
-    board.update(state);
+    view.show(state);
     tick();
   }
 
   function finish() {
     stop();
     log.info(`color invasion (${lang}) finished with ${state.score} points`);
-    stage.append(
+    view.showResult(
       createResultPanel(
         t,
         state,
@@ -181,39 +141,8 @@ function _playRound(root, ctx, { lang, run }, playAgain) {
 
   function stop() {
     clearInterval(ticker);
-    window.removeEventListener("keydown", onKey);
+    stopKeys();
   }
 
   return stop;
-}
-
-/**
- * On-screen ◀ 🔥 ▶ buttons. They don't take focus, so Space never also presses one.
- * @param {import("../../core/i18n.js").Translate} t
- * @param {(command: Command) => void} onCommand
- */
-function _createControls(t, onCommand) {
-  /** @type {[Command, string, string][]} */
-  const buttons = [
-    ["left", "◀", t("dpad.left")],
-    ["shoot", "🔥", t("colorInvasion.shoot")],
-    ["right", "▶", t("dpad.right")],
-  ];
-  return h(
-    "div",
-    { class: "ci-controls" },
-    ...buttons.map(([command, label, name]) =>
-      h(
-        "button",
-        {
-          type: "button",
-          class: `ci-control ci-${command}`,
-          "aria-label": name,
-          onmousedown: (event) => event.preventDefault(),
-          onclick: () => onCommand(command),
-        },
-        label,
-      ),
-    ),
-  );
 }
