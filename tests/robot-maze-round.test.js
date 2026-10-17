@@ -100,15 +100,22 @@ test("the player moves by tapping a neighbouring cell, with no on-screen pad", a
   await until(boardShown(root));
   assert.equal(root.querySelector(".dpad"), null);
 
-  // The same maze the game built from the Worker's seed: find an open step without a robot.
+  // The same maze the game built from the Worker's seed. The start's open neighbour may hold a
+  // robot; then the tap asks its question instead of moving, which is still a move attempt.
   const game = createGame({ ...LEVELS.standard, rng: createRng(exchanges[0].data.seed) });
-  const target = DIRECTIONS.filter((dir) => canMove(game.maze, game.player, dir))
-    .map((dir) => stepFrom(game.player, dir))
-    .find((pos) => !game.robots.some((r) => r.row === pos.row && r.col === pos.col));
-  assert.ok(target, "the start has no free neighbour");
+  const dir = /** @type {import("../src/games/robot-maze/maze.js").Direction} */ (
+    DIRECTIONS.find((d) => canMove(game.maze, game.player, d))
+  );
+  const target = stepFrom(game.player, dir);
+  const robot = game.robots.some((r) => r.row === target.row && r.col === target.col);
   // Cells follow a row of column numbers; each row starts with its row number.
   const size = game.maze.size;
   const cell = root.querySelector(".rm-board")?.children[(size + 1) * target.row + target.col];
   /** @type {HTMLElement} */ (cell).click();
-  assert.equal(cell?.textContent, "🧒");
+  if (robot) {
+    assert.equal(
+      root.querySelector(".rm-question")?.textContent,
+      `${target.row} × ${target.col} = ?`,
+    );
+  } else assert.equal(cell?.textContent, "🧒");
 });
