@@ -3,6 +3,9 @@ import assert from "node:assert/strict";
 import { installDom } from "./helpers/dom.js";
 import { gameContext, goOffline, routeFetchToWorker, until } from "./helpers/game-online.js";
 import { solveActions } from "./helpers/maze-solver.js";
+import { createRng } from "../src/core/random.js";
+import { DIRECTIONS, canMove, stepFrom } from "../src/games/robot-maze/maze.js";
+import { LEVELS, createGame } from "../src/games/robot-maze/state.js";
 import { workerSetup } from "./helpers/worker.js";
 
 const { messages } = await import("../src/games/robot-maze/i18n.js");
@@ -83,4 +86,29 @@ test("offline, the maze is played but nothing is sent", async () => {
   await until(boardShown(root));
   assert.ok(root.querySelector(".rm-board"));
   assert.equal(root.querySelector(".lb-submit"), null);
+});
+
+test("the player moves by tapping a neighbouring cell, with no on-screen pad", async () => {
+  const worker = workerSetup();
+  const exchanges = routeFetchToWorker(worker);
+  const player = await worker.newPlayer();
+  const root = dom.document.createElement("main");
+  unmount = robotMaze.mount(
+    root,
+    gameContext(messages.en, { name: player.nickname, account: player }),
+  );
+  await until(boardShown(root));
+  assert.equal(root.querySelector(".dpad"), null);
+
+  // The same maze the game built from the Worker's seed: find an open step without a robot.
+  const game = createGame({ ...LEVELS.standard, rng: createRng(exchanges[0].data.seed) });
+  const target = DIRECTIONS.filter((dir) => canMove(game.maze, game.player, dir))
+    .map((dir) => stepFrom(game.player, dir))
+    .find((pos) => !game.robots.some((r) => r.row === pos.row && r.col === pos.col));
+  assert.ok(target, "the start has no free neighbour");
+  // Cells follow a row of column numbers; each row starts with its row number.
+  const size = game.maze.size;
+  const cell = root.querySelector(".rm-board")?.children[(size + 1) * target.row + target.col];
+  /** @type {HTMLElement} */ (cell).click();
+  assert.equal(cell?.textContent, "🧒");
 });

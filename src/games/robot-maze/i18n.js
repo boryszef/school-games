@@ -2,7 +2,7 @@ export const messages = {
   pl: {
     "robotMaze.title": "Labirynt robotów",
     "robotMaze.goal":
-      "Dojdź do flagi 🏁. Robot przepuści cię, gdy pomnożysz numer wiersza przez numer kolumny.",
+      "Dojdź do flagi 🏁, idąc strzałkami albo dotykając sąsiedniego pola. Robot przepuści cię, gdy pomnożysz numer wiersza przez numer kolumny.",
     "robotMaze.time": "Czas",
     "robotMaze.question": "{a} × {b} = ?",
     "robotMaze.answer": "Wynik",
@@ -20,7 +20,7 @@ export const messages = {
   en: {
     "robotMaze.title": "Robot Maze",
     "robotMaze.goal":
-      "Reach the flag 🏁. A robot lets you pass when you multiply the row number by the column number.",
+      "Reach the flag 🏁 with the arrow keys or by tapping a neighbouring cell. A robot lets you pass when you multiply the row number by the column number.",
     "robotMaze.time": "Time",
     "robotMaze.question": "{a} × {b} = ?",
     "robotMaze.answer": "Answer",

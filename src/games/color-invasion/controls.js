@@ -36,9 +36,9 @@ export function listenForKeys(onCommand) {
 export function createControls(t, onCommand) {
   /** @type {[Command, string, string][]} */
   const buttons = [
-    ["left", "◀", t("dpad.left")],
+    ["left", "◀", t("controls.left")],
     ["shoot", "🔥", t("colorInvasion.shoot")],
-    ["right", "▶", t("dpad.right")],
+    ["right", "▶", t("controls.right")],
   ];
   return h(
     "div",

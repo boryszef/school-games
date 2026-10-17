@@ -4,7 +4,6 @@ import { finishServerRun, startServerRun } from "../../core/online/server-run.js
 import { createRng } from "../../core/random.js";
 import { createTimer } from "../../core/timer.js";
 import { h, loadStylesheet } from "../../core/ui/dom.js";
-import { createDpad } from "../../core/ui/dpad.js";
 import { submitToLeaderboard } from "../../core/ui/leaderboard-submit.js";
 import { createBoard } from "./board.js";
 import { createChallengeDialog } from "./challenge.js";
@@ -117,7 +116,6 @@ function _playRound(root, ctx, level, restart, run) {
       h("p", { class: "rm-goal" }, t("robotMaze.goal")),
       h("p", { class: "rm-hud" }, `⏱ ${t("robotMaze.time")}: `, clock),
       stage,
-      createDpad(tryMove, t),
     ),
   );
   board.update(state);

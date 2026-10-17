@@ -16,10 +16,8 @@ export default {
   "notFound.back": "Wróć do gier",
   "numpad.delete": "Usuń cyfrę",
   "numpad.submit": "Sprawdź",
-  "dpad.up": "W górę",
-  "dpad.down": "W dół",
-  "dpad.left": "W lewo",
-  "dpad.right": "W prawo",
+  "controls.left": "W lewo",
+  "controls.right": "W prawo",
   "lobby.inviteTitle": "Zaproś kolegę lub koleżankę",
   "lobby.preparing": "Przygotowuję…",
   "lobby.inviteHelp":
