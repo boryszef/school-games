@@ -10,6 +10,11 @@
   gap: 12px;
 }
 
+.ci-preparing {
+  text-align: center;
+  color: var(--muted);
+}
+
 .ci-language {
   width: min(100%, 260px);
   font-size: 1.3rem;

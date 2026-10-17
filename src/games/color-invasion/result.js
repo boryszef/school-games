@@ -7,8 +7,9 @@ import { h } from "../../core/ui/dom.js";
  * @param {import("../../core/i18n.js").Translate} t
  * @param {RoundState} state The finished round.
  * @param {ResultActions} actions
+ * @param {HTMLElement | null} submission The leaderboard status, for a server-checked run.
  */
-export function createResultPanel(t, state, actions) {
+export function createResultPanel(t, state, actions, submission) {
   return h(
     "div",
     { class: "ci-overlay" },
@@ -20,6 +21,7 @@ export function createResultPanel(t, state, actions) {
       h("p", {}, t("colorInvasion.hits", { count: state.hits })),
       h("p", {}, t("colorInvasion.misses", { count: state.misses })),
       h("p", {}, t("colorInvasion.clears", { count: state.clears })),
+      submission ?? "",
       h(
         "button",
         { type: "button", class: "button", onclick: actions.onPlayAgain },

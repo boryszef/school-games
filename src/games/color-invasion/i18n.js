@@ -14,6 +14,7 @@ export const messages = {
     "colorInvasion.clears": "Zestrzelone kolumny: {count}",
     "colorInvasion.playAgain": "Zagraj jeszcze raz",
     "colorInvasion.home": "Wybierz inną grę",
+    "colorInvasion.preparing": "Przygotowuję grę…",
   },
   en: {
     "colorInvasion.title": "Color Invasion",
@@ -30,5 +31,6 @@ export const messages = {
     "colorInvasion.clears": "Columns cleared: {count}",
     "colorInvasion.playAgain": "Play again",
     "colorInvasion.home": "Choose another game",
+    "colorInvasion.preparing": "Preparing the game…",
   },
 };

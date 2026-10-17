@@ -1,3 +1,4 @@
+import { createColorRuns } from "./color-runs.js";
 import { createDuels } from "./duels.js";
 import { BadRequestError, readObject } from "./http.js";
 import { createLeaderboard } from "./leaderboard.js";
@@ -34,6 +35,7 @@ export function createApp(deps) {
   const rooms = createRooms(deps);
   const players = createPlayers(deps);
   const mazeRuns = createMazeRuns(deps);
+  const colorRuns = createColorRuns(deps);
   const duels = createDuels({ ...deps, playerExists: players.exists });
   const leaderboard = createLeaderboard(deps);
 
@@ -78,6 +80,20 @@ export function createApp(deps) {
       player: true,
       handler: async ({ request, params: [runId], playerId }) =>
         mazeRuns.finish(playerId, runId, await readObject(request)),
+    },
+    {
+      method: "POST",
+      path: /^\/color-runs$/,
+      player: true,
+      handler: async ({ request, playerId }) =>
+        colorRuns.start(playerId, await readObject(request)),
+    },
+    {
+      method: "POST",
+      path: /^\/color-runs\/([^/]+)\/finish$/,
+      player: true,
+      handler: async ({ request, params: [runId], playerId }) =>
+        colorRuns.finish(playerId, runId, await readObject(request)),
     },
     {
       method: "POST",

@@ -1,5 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { playColors } from "../helpers/color-player.js";
 import { solveActions } from "../helpers/maze-solver.js";
 import { workerSetup } from "../helpers/worker.js";
 
@@ -48,11 +49,31 @@ function helpers(worker) {
       assert.equal(response.status, 202);
     }
   };
+  /**
+   * Plays a Color Invasion round. Fewer than 5 hits can't clear a column, so the score is
+   * `hits - misses`.
+   * @param {TestPlayer} player
+   * @param {string} lang
+   * @param {{hits: number, misses?: number}} plan
+   */
+  const playColorRound = async (player, lang, plan) => {
+    const started = await worker.call("POST", "/color-runs", {
+      token: player.token,
+      body: { lang },
+    });
+    const { runId, seed } = await started.json();
+    worker.advance(60_000);
+    const finished = await worker.call("POST", `/color-runs/${runId}/finish`, {
+      token: player.token,
+      body: { actions: playColors(seed, plan).actions },
+    });
+    assert.equal(finished.status, 200);
+  };
   const board = async () => (await worker.call("GET", "/leaderboard")).json();
-  return { playMaze, duel, board };
+  return { playMaze, duel, playColorRound, board };
 }
 
-test("an empty leaderboard has six empty lists and is never cached", async () => {
+test("an empty leaderboard has empty lists and is never cached", async () => {
   const worker = workerSetup();
   const response = await worker.call("GET", "/leaderboard");
   assert.equal(response.status, 200);
@@ -62,6 +83,11 @@ test("an empty leaderboard has six empty lists and is never cached", async () =>
     maze: { allTime: [], week: [] },
     mazeHard: { allTime: [], week: [] },
     duels: { allTime: [], week: [] },
+    colors: {
+      en: { allTime: [], week: [] },
+      de: { allTime: [], week: [] },
+      es: { allTime: [], week: [] },
+    },
   });
 });
 
@@ -137,4 +163,57 @@ test("the week starts on Monday 00:00 UTC", async () => {
   assert.deepEqual(maze.week, [{ nickname: ola.nickname, timeMs: 65_000 }]);
   assert.equal(duels.allTime.length, 2);
   assert.deepEqual(duels.week, [{ nickname: ola.nickname, wins: 1 }]);
+});
+
+test("color scores are ranked per language", async () => {
+  const worker = workerSetup();
+  const { playColorRound, board } = helpers(worker);
+  const [ala, ola] = [await worker.newPlayer(), await worker.newPlayer()];
+  await playColorRound(ala, "en", { hits: 3 });
+  await playColorRound(ola, "es", { hits: 2 });
+
+  const { colors } = await board();
+  assert.deepEqual(colors.en.allTime, [{ nickname: ala.nickname, score: 3 }]);
+  assert.deepEqual(colors.de.allTime, []);
+  assert.deepEqual(colors.es.allTime, [{ nickname: ola.nickname, score: 2 }]);
+  assert.deepEqual(colors.es.week, colors.es.allTime);
+});
+
+test("the color list shows each player's best score, highest first", async () => {
+  const worker = workerSetup();
+  const { playColorRound, board } = helpers(worker);
+  const [ala, ola] = [await worker.newPlayer(), await worker.newPlayer()];
+  await playColorRound(ala, "de", { hits: 2 });
+  await playColorRound(ola, "de", { hits: 3 });
+  await playColorRound(ala, "de", { hits: 4 });
+  await playColorRound(ola, "de", { hits: 1, misses: 3 });
+
+  assert.deepEqual((await board()).colors.de.allTime, [
+    { nickname: ala.nickname, score: 4 },
+    { nickname: ola.nickname, score: 3 },
+  ]);
+});
+
+test("on equal scores the earlier round ranks higher", async () => {
+  const worker = workerSetup();
+  const { playColorRound, board } = helpers(worker);
+  const [first, second] = [await worker.newPlayer(), await worker.newPlayer()];
+  await playColorRound(first, "en", { hits: 2 });
+  await playColorRound(second, "en", { hits: 2 });
+  const names = (await board()).colors.en.allTime.map((/** @type {any} */ e) => e.nickname);
+  assert.deepEqual(names, [first.nickname, second.nickname]);
+});
+
+test("the weekly color list starts on Monday 00:00 UTC", async () => {
+  const worker = workerSetup(SUNDAY_LATE - 120_000);
+  const { playColorRound, board } = helpers(worker);
+  const [ala, ola] = [await worker.newPlayer(), await worker.newPlayer()];
+  await playColorRound(ala, "es", { hits: 4 });
+
+  worker.setTime(MONDAY_MORNING);
+  await playColorRound(ola, "es", { hits: 1 });
+
+  const { es } = (await board()).colors;
+  assert.equal(es.allTime.length, 2);
+  assert.deepEqual(es.week, [{ nickname: ola.nickname, score: 1 }]);
 });

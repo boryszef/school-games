@@ -56,6 +56,7 @@ export default {
   "leaderboard.player": "Player",
   "leaderboard.time": "Time",
   "leaderboard.wins": "Wins",
+  "leaderboard.points": "Points",
   "leaderboard.sending": "Sending…",
   "leaderboard.added": "Added!",
   "leaderboard.failed": "Could not send it.",

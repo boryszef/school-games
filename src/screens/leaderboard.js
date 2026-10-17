@@ -1,17 +1,23 @@
 import { formatTime } from "../core/format.js";
 import { ApiError, ServerUnreachableError, callApi } from "../core/online/api.js";
 import { h } from "../core/ui/dom.js";
+import { TARGET_LANGUAGES } from "../games/color-invasion/colors.js";
 
 /** @typedef {import("../core/app.js").App} App */
 /** @typedef {{nickname: string, timeMs: number}} MazeEntry */
 /** @typedef {{nickname: string, wins: number}} DuelEntry */
+/** @typedef {{nickname: string, score: number}} ColorEntry */
+/** @typedef {import("../games/color-invasion/colors.js").TargetLanguage} TargetLanguage */
 /**
  * @template Entry
  * @typedef {{allTime: Entry[], week: Entry[]}} Rankings
  */
 /**
- * @typedef {{maze: Rankings<MazeEntry>, mazeHard: Rankings<MazeEntry>, duels: Rankings<DuelEntry>}}
- *   Leaderboard
+ * @typedef {object} Leaderboard
+ * @property {Rankings<MazeEntry>} maze
+ * @property {Rankings<MazeEntry>} mazeHard
+ * @property {Rankings<DuelEntry>} duels
+ * @property {Record<TargetLanguage, Rankings<ColorEntry>>} colors One ranking per language.
  */
 
 /** @type {import("../core/app.js").Screen} */
@@ -47,10 +53,23 @@ function _sections(app, board) {
   const time = (entry) => formatTime(entry.timeMs);
   /** @param {DuelEntry} entry */
   const wins = (entry) => String(entry.wins);
+  /** @param {ColorEntry} entry */
+  const points = (entry) => String(entry.score);
+  const languages = /** @type {[TargetLanguage, string][]} */ (Object.entries(TARGET_LANGUAGES));
   return [
     _section(t, "🤖 " + t("robotMaze.title"), board.maze, t("leaderboard.time"), time, me),
     _section(t, "🦾 " + t("robotMaze.hardTitle"), board.mazeHard, t("leaderboard.time"), time, me),
     _section(t, "🪢 " + t("tugOfWar.title"), board.duels, t("leaderboard.wins"), wins, me),
+    ...languages.map(([lang, name]) =>
+      _section(
+        t,
+        `👾 ${t("colorInvasion.title")} – ${name}`,
+        board.colors[lang],
+        t("leaderboard.points"),
+        points,
+        me,
+      ),
+    ),
   ];
 }
 

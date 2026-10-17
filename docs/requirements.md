@@ -2,7 +2,7 @@
 
 ## Summary
 
-Education games is a static web app (HTML, CSS and ES-module JavaScript with no runtime dependencies or backend) that hosts learning games for young kids. The first game, **Robot Maze**, practises the 10×10 multiplication table. The child walks through a 10×10 maze. Ten robots block the path to the exit, and each robot is disabled by typing the product of its cell's coordinates. A wrong answer costs 5 seconds. A faster time is a better result. Players get generated nicknames such as `RedFox1`. Their results and statistics are stored in the browser, and after a game a player can add the score to an online leaderboard. The UI is in Polish and English. The platform has a plug-in contract so more games can be added later. Two-player games connect two browsers directly over WebRTC. A small Cloudflare Worker only passes the connection details between them through a short room code (shown as a link and a QR code). The second game, **Tug of War**, is such a duel: both players get the same multiplication, and the faster correct answer tugs the rope. The third game, **Color Invasion**, trains color names in English, German and Spanish: the child steers a ship and shoots the box whose color matches the word shown. Sources: [plan.md](plan.md), [plan-tug-of-war.md](plan-tug-of-war.md), [plan-pvp-rooms.md](plan-pvp-rooms.md), [plan-leaderboard.md](plan-leaderboard.md), [plan-color-invasion.md](plan-color-invasion.md).
+Education games is a static web app (HTML, CSS and ES-module JavaScript with no runtime dependencies or backend) that hosts learning games for young kids. The first game, **Robot Maze**, practises the 10×10 multiplication table. The child walks through a 10×10 maze. Ten robots block the path to the exit, and each robot is disabled by typing the product of its cell's coordinates. A wrong answer costs 5 seconds. A faster time is a better result. Players get generated nicknames such as `RedFox1`. Their results and statistics are stored in the browser, and after a game a player can add the score to an online leaderboard. The UI is in Polish and English. The platform has a plug-in contract so more games can be added later. Two-player games connect two browsers directly over WebRTC. A small Cloudflare Worker only passes the connection details between them through a short room code (shown as a link and a QR code). The second game, **Tug of War**, is such a duel: both players get the same multiplication, and the faster correct answer tugs the rope. The third game, **Color Invasion**, trains color names in English, German and Spanish: the child steers a ship and shoots the box whose color matches the word shown. Sources: [plan.md](plan.md), [plan-tug-of-war.md](plan-tug-of-war.md), [plan-pvp-rooms.md](plan-pvp-rooms.md), [plan-leaderboard.md](plan-leaderboard.md), [plan-color-invasion.md](plan-color-invasion.md), [plan-color-invasion-leaderboard.md](plan-color-invasion-leaderboard.md).
 
 ## R1 – Platform
 
@@ -44,7 +44,7 @@ Education games is a static web app (HTML, CSS and ES-module JavaScript with no 
 
 ## R5 – Quality
 
-- R5.1 The pure logic (maze, path, robots, game state, profiles, storage, i18n parity, room codes, nicknames, the Worker's rooms, players, maze runs, duels and leaderboard, Tug of War rules and message validation, Color Invasion rules and vocabulary) is unit-tested with `node --test`.
+- R5.1 The pure logic (maze, path, robots, game state, profiles, storage, i18n parity, room codes, nicknames, the Worker's rooms, players, maze runs, duels and leaderboard, Tug of War rules and message validation, Color Invasion rules, vocabulary and color runs) is unit-tested with `node --test`.
 - R5.2 Pre-commit hooks run Prettier, ESLint, `tsc --checkJs` (JSDoc types), knip (dead code) and the tests.
 - R5.3 The Node version is managed through nvm (`.nvmrc`).
 
@@ -97,12 +97,18 @@ Education games is a static web app (HTML, CSS and ES-module JavaScript with no 
   - A win counts only when both reports for a match agree: each names the other, and exactly one won. Reports that disagree are discarded.
   - At most 3 wins per winner and opponent count per UTC day.
   - Reports are sent only when both players have an account.
-- R8.6 **Rankings.** `#/leaderboard`, linked from the header (🏆) on every screen, shows, for each game, the top 10 all-time and the top 10 this week (since Monday 00:00 UTC):
+- R8.6 **Color Invasion scores.**
+  - With an account, a round starts with `POST /color-runs` and the body `{lang}`, where `lang` is `en`, `de` or `es`. It returns a run id and a seed, and the server notes the start time. The column order and every target color come from that seed, and the player's commands are recorded: `"left"`, `"right"`, `"shoot"` and `{to: column}` for a tapped column (0–9).
+  - When the round ends, the commands are sent to `POST /color-runs/:id/finish`. The Worker replays them with the game's own rules, and the replayed score is the leaderboard score.
+  - A run counts only if it is finished within 70 s of its start (the 60 s round plus time for the network). It can be finished once, only by its own player, with at most 1000 commands.
+  - If the Worker can't be reached at the start, or the player has no account, the round is played locally and nothing is sent.
+- R8.7 **Rankings.** `#/leaderboard`, linked from the header (🏆) on every screen, shows, for each game, the top 10 all-time and the top 10 this week (since Monday 00:00 UTC):
   - Robot Maze and Robot Maze – hard, each with its own lists: each player's best time, fastest first.
   - Tug of War: number of wins, most first.
+  - Color Invasion, one ranking per target language (English, Deutsch, Español): each player's best round score, highest first. On equal scores the earlier round ranks higher.
   - The current player's row is highlighted.
   - The list is never cached, so a score shows as soon as it has been added.
-- R8.7 **Privacy.** No real names are stored: nicknames are generated. The Worker stores no IP addresses, and keeps only a hash of each token. The token is sent only to the Worker and never to the other player; the other player sees only the public id.
+- R8.8 **Privacy.** No real names are stored: nicknames are generated. The Worker stores no IP addresses, and keeps only a hash of each token. The token is sent only to the Worker and never to the other player; the other player sees only the public id.
 
 ## R9 – Color Invasion rules
 
@@ -118,4 +124,4 @@ Education games is a static web app (HTML, CSS and ES-module JavaScript with no 
 - R9.7 After a correct hit, a new target color is chosen at random, never the same as the previous one. After a wrong shot the target stays until the child hits it.
 - R9.8 Popping the last box of a column gives a bonus of +5 points (on top of the +1), and the column refills with 5 boxes of the same color in the same place.
 - R9.9 A round lasts 60 s and starts as soon as the language is picked. The remaining time is shown. When it runs out, input stops and a result card shows the score, the number of correct hits, mistakes and cleared columns, with "Play again" (same language) and "Choose another game".
-- R9.10 Results are not stored and not sent to the leaderboard.
+- R9.10 Results are not stored in the browser. They are sent to the leaderboard as described in R8.6.

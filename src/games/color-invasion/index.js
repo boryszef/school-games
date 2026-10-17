@@ -1,9 +1,11 @@
 import { log } from "../../core/log.js";
+import { createRng } from "../../core/random.js";
 import { createTimer } from "../../core/timer.js";
 import { h, loadStylesheet } from "../../core/ui/dom.js";
 import { createBoard } from "./board.js";
 import { COLOR_NAMES } from "./colors.js";
 import { messages } from "./i18n.js";
+import { startServerRun, submitRun } from "./online.js";
 import { createLanguagePicker } from "./picker.js";
 import { createResultPanel } from "./result.js";
 import { ROUND_MS, createRound, moveShip, moveShipTo, shoot } from "./state.js";
@@ -12,6 +14,8 @@ import { ROUND_MS, createRound, moveShip, moveShipTo, shoot } from "./state.js";
 /** @typedef {import("./colors.js").TargetLanguage} TargetLanguage */
 /** @typedef {import("./state.js").RoundState} RoundState */
 /** @typedef {"left" | "right" | "shoot"} Command */
+/** @typedef {import("./online.js").Action} Action */
+/** @typedef {import("./online.js").ServerRun} ServerRun */
 
 const CLOCK_REFRESH_MS = 100;
 
@@ -41,7 +45,7 @@ export const colorInvasion = {
     const play = (lang) => {
       lastLanguage = lang;
       stopRound();
-      stopRound = _playRound(root, ctx, lang, () => play(lang));
+      stopRound = _startRound(root, ctx, lang, () => play(lang));
     };
     root.replaceChildren(createLanguagePicker(ctx.t, lastLanguage, play));
     return () => stopRound();
@@ -49,21 +53,49 @@ export const colorInvasion = {
 };
 
 /**
- * Plays one 60 s round; returns a cleanup function.
+ * Gets a server-checked run for a registered player, then plays the round; returns a cleanup
+ * function.
  * @param {HTMLElement} root
  * @param {GameContext} ctx
  * @param {TargetLanguage} lang
  * @param {() => void} playAgain
  */
-function _playRound(root, ctx, lang, playAgain) {
+function _startRound(root, ctx, lang, playAgain) {
+  let cancelled = false;
+  let stopRound = () => {};
+  root.replaceChildren(h("p", { class: "ci-preparing" }, ctx.t("colorInvasion.preparing")));
+  startServerRun(ctx.player.account, lang).then((run) => {
+    if (!cancelled) stopRound = _playRound(root, ctx, { lang, run }, playAgain);
+  });
+  return () => {
+    cancelled = true;
+    stopRound();
+  };
+}
+
+/**
+ * Plays one 60 s round; returns a cleanup function.
+ * @param {HTMLElement} root
+ * @param {GameContext} ctx
+ * @param {{lang: TargetLanguage, run: ServerRun | null}} round
+ * @param {() => void} playAgain
+ */
+function _playRound(root, ctx, { lang, run }, playAgain) {
   const { t } = ctx;
-  let state = createRound(Math.random);
+  const rng = run === null ? Math.random : createRng(run.seed);
+  let state = createRound(rng);
+  /** Every command, replayed by the Worker to check the score. */
+  /** @type {Action[]} */
+  const actions = [];
   log.debug("color invasion round", lang, state.columns.map((c) => c.color).join());
   const timer = createTimer();
   const word = h("p", { class: "ci-word" });
   const score = h("span", { class: "ci-score" });
   const clock = h("span", { class: "ci-clock" });
-  const board = createBoard(state.columns.length, (column) => apply(moveShipTo(state, column)));
+  const board = createBoard(state.columns.length, (column) => {
+    actions.push({ to: column });
+    apply(moveShipTo(state, column));
+  });
   const stage = h("div", { class: "ci-stage" }, board.element);
 
   root.replaceChildren(
@@ -75,7 +107,7 @@ function _playRound(root, ctx, lang, playAgain) {
       h("p", { class: "ci-prompt" }, t("colorInvasion.shootThis")),
       word,
       stage,
-      _createControls(t, run),
+      _createControls(t, runCommand),
     ),
   );
   timer.start();
@@ -97,14 +129,15 @@ function _playRound(root, ctx, lang, playAgain) {
     const command = KEY_COMMANDS[event.key];
     if (command === undefined) return;
     event.preventDefault();
-    run(command);
+    runCommand(command);
   }
 
   /** @param {Command} command */
-  function run(command) {
+  function runCommand(command) {
+    actions.push(command);
     if (command !== "shoot") return apply(moveShip(state, command));
     const column = state.shipColumn;
-    const shot = shoot(state, Math.random);
+    const shot = shoot(state, rng);
     log.debug("shot", shot.outcome, "score", shot.state.score);
     apply(shot.state);
     board.flash(shot.outcome, column);
@@ -126,7 +159,14 @@ function _playRound(root, ctx, lang, playAgain) {
   function finish() {
     stop();
     log.info(`color invasion (${lang}) finished with ${state.score} points`);
-    stage.append(createResultPanel(t, state, { onPlayAgain: playAgain, onHome: ctx.exit }));
+    stage.append(
+      createResultPanel(
+        t,
+        state,
+        { onPlayAgain: playAgain, onHome: ctx.exit },
+        run === null ? null : submitRun(t, run, actions),
+      ),
+    );
   }
 
   function stop() {

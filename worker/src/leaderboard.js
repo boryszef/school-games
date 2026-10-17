@@ -1,4 +1,5 @@
 import { formatNickname } from "../../src/core/online/nickname.js";
+import { TARGET_LANGUAGES } from "../../src/games/color-invasion/colors.js";
 
 /** @typedef {import("./db.js").Db} Db */
 /** @typedef {import("./http.js").Reply} Reply */
@@ -37,6 +38,30 @@ export function createLeaderboard({ db, now }) {
     return results.map((row) => ({ nickname: _nickname(row), timeMs: Number(row.time_ms) }));
   };
 
+  /**
+   * Each player's best Color Invasion score in a language (the earlier round on a tie),
+   * highest first.
+   * @param {string} lang
+   * @param {number} since
+   */
+  const colorTop = async (lang, since) => {
+    const { results } = await db
+      .prepare(
+        `SELECT p.color, p.animal, p.number, best.score
+         FROM (SELECT player_id, score, finished_at,
+                 ROW_NUMBER() OVER (PARTITION BY player_id ORDER BY score DESC, finished_at) AS place
+               FROM color_runs
+               WHERE lang = ? AND finished_at IS NOT NULL AND finished_at >= ?) AS best
+         JOIN players AS p ON p.id = best.player_id
+         WHERE best.place = 1
+         ORDER BY best.score DESC, best.finished_at
+         LIMIT ?`,
+      )
+      .bind(lang, since, TOP)
+      .all();
+    return results.map((row) => ({ nickname: _nickname(row), score: Number(row.score) }));
+  };
+
   /** Most wins first; on a tie, whoever got there first. */
   const duelTop = async (/** @type {number} */ since) => {
     const { results } = await db
@@ -64,6 +89,14 @@ export function createLeaderboard({ db, now }) {
           maze: { allTime: await mazeTop("standard", 0), week: await mazeTop("standard", week) },
           mazeHard: { allTime: await mazeTop("hard", 0), week: await mazeTop("hard", week) },
           duels: { allTime: await duelTop(0), week: await duelTop(week) },
+          colors: Object.fromEntries(
+            await Promise.all(
+              Object.keys(TARGET_LANGUAGES).map(async (lang) => [
+                lang,
+                { allTime: await colorTop(lang, 0), week: await colorTop(lang, week) },
+              ]),
+            ),
+          ),
         },
       };
     },
