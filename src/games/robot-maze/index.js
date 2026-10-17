@@ -1,6 +1,6 @@
 import { formatTime } from "../../core/format.js";
 import { log } from "../../core/log.js";
-import { ApiError, ServerUnreachableError, callApi } from "../../core/online/api.js";
+import { finishServerRun, startServerRun } from "../../core/online/server-run.js";
 import { createRng } from "../../core/random.js";
 import { createTimer } from "../../core/timer.js";
 import { h, loadStylesheet } from "../../core/ui/dom.js";
@@ -19,12 +19,8 @@ import { LEVELS, answer, createGame, move } from "./state.js";
 /** @typedef {import("./maze.js").Position} Position */
 /** @typedef {import("./state.js").GameState} GameState */
 /** @typedef {import("./state.js").Level} Level */
-/** @typedef {import("../../core/storage.js").Account} Account */
 /** @typedef {Direction | {answer: number}} Action */
-/**
- * A run the Worker times (R8.4): the maze comes from its seed, and the moves are recorded.
- * @typedef {{runId: string, seed: number, token: string}} ServerRun
- */
+/** @typedef {import("../../core/online/server-run.js").ServerRun} ServerRun */
 
 const CLOCK_REFRESH_MS = 100;
 
@@ -82,36 +78,13 @@ function _startRound(root, ctx, level, restart) {
   let cancelled = false;
   let stopRound = () => {};
   root.replaceChildren(h("p", { class: "rm-preparing" }, ctx.t("robotMaze.preparing")));
-  _serverRun(ctx.player.account, level).then((run) => {
+  startServerRun(ctx.player.account, "/maze-runs", { level }).then((run) => {
     if (!cancelled) stopRound = _playRound(root, ctx, level, restart, run);
   });
   return () => {
     cancelled = true;
     stopRound();
   };
-}
-
-/**
- * @param {Account | null} account
- * @param {Level} level
- * @returns {Promise<ServerRun | null>} Null without an account or when the Worker can't be
- *   reached; the round is then played locally and can't be added to the leaderboard.
- */
-async function _serverRun(account, level) {
-  if (account === null) return null;
-  try {
-    const { data } = await callApi("POST", "/maze-runs", {
-      token: account.token,
-      body: { level },
-      expect: [201],
-    });
-    log.debug("server-timed run", data.runId);
-    return { runId: data.runId, seed: data.seed, token: account.token };
-  } catch (error) {
-    if (!(error instanceof ServerUnreachableError || error instanceof ApiError)) throw error;
-    log.info("playing offline: this run can't be added to the leaderboard");
-    return null;
-  }
 }
 
 /**
@@ -203,7 +176,12 @@ function _playRound(root, ctx, level, restart, run) {
         t,
         { timeMs, mistakes: state.mistakes.length, previousBestMs },
         { onPlayAgain: restart, onHome: ctx.exit },
-        run === null ? null : _submitRun(t, run, actions),
+        run === null
+          ? null
+          : submitToLeaderboard(t, async () => {
+              const { timeMs } = await finishServerRun(run, actions);
+              return t("robotMaze.leaderboardTime", { time: formatTime(timeMs) });
+            }),
       ),
     );
   }
@@ -212,23 +190,6 @@ function _playRound(root, ctx, level, restart, run) {
     clearInterval(ticker);
     window.removeEventListener("keydown", onKey);
   };
-}
-
-/**
- * @param {import("../../core/i18n.js").Translate} t
- * @param {ServerRun} run
- * @param {Action[]} actions
- */
-function _submitRun(t, run, actions) {
-  return submitToLeaderboard(t, async () => {
-    const { data } = await callApi("POST", `/maze-runs/${run.runId}/finish`, {
-      token: run.token,
-      body: { actions },
-      expect: [200],
-    });
-    log.info(`added to the leaderboard: ${data.timeMs} ms`);
-    return t("robotMaze.leaderboardTime", { time: formatTime(data.timeMs) });
-  });
 }
 
 /**

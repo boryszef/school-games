@@ -1,11 +1,12 @@
 import { log } from "../../core/log.js";
+import { finishServerRun, startServerRun } from "../../core/online/server-run.js";
 import { createRng } from "../../core/random.js";
 import { createTimer } from "../../core/timer.js";
 import { h, loadStylesheet } from "../../core/ui/dom.js";
+import { submitToLeaderboard } from "../../core/ui/leaderboard-submit.js";
 import { createBoard } from "./board.js";
 import { COLOR_NAMES } from "./colors.js";
 import { messages } from "./i18n.js";
-import { startServerRun, submitRun } from "./online.js";
 import { createLanguagePicker } from "./picker.js";
 import { createResultPanel } from "./result.js";
 import { createScoreDisplay } from "./score.js";
@@ -15,8 +16,8 @@ import { ROUND_MS, createRound, moveShip, moveShipTo, shoot } from "./state.js";
 /** @typedef {import("./colors.js").TargetLanguage} TargetLanguage */
 /** @typedef {import("./state.js").RoundState} RoundState */
 /** @typedef {"left" | "right" | "shoot"} Command */
-/** @typedef {import("./online.js").Action} Action */
-/** @typedef {import("./online.js").ServerRun} ServerRun */
+/** @typedef {Command | {to: number}} Action Recorded for the Worker's replay (R8.6). */
+/** @typedef {import("../../core/online/server-run.js").ServerRun} ServerRun */
 
 const CLOCK_REFRESH_MS = 100;
 
@@ -65,7 +66,7 @@ function _startRound(root, ctx, lang, playAgain) {
   let cancelled = false;
   let stopRound = () => {};
   root.replaceChildren(h("p", { class: "ci-preparing" }, ctx.t("colorInvasion.preparing")));
-  startServerRun(ctx.player.account, lang).then((run) => {
+  startServerRun(ctx.player.account, "/color-runs", { lang }).then((run) => {
     if (!cancelled) stopRound = _playRound(root, ctx, { lang, run }, playAgain);
   });
   return () => {
@@ -168,7 +169,12 @@ function _playRound(root, ctx, { lang, run }, playAgain) {
         t,
         state,
         { onPlayAgain: playAgain, onHome: ctx.exit },
-        run === null ? null : submitRun(t, run, actions),
+        run === null
+          ? null
+          : submitToLeaderboard(t, async () => {
+              await finishServerRun(run, actions);
+              return null;
+            }),
       ),
     );
   }
