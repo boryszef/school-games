@@ -39,7 +39,7 @@ Education games is a static web app (HTML, CSS and ES-module JavaScript with no 
 - R4.8 Answers are typed on the keyboard (`inputmode="numeric"`) or with the on-screen number pad.
 - R4.9 The timer starts when the maze appears and stops when the player reaches the exit. The displayed time includes penalties.
 - R4.10 The result screen shows the total time, the number of mistakes and whether it is a new personal best. It offers "Play again" and "Home".
-- R4.11 **Robot Maze – hard** is a separate game (`robot-maze-hard`, its own home tile, stats and rankings) with the same rules on a 20×20 maze with 20 robots. Rows and columns are numbered 1–20, so the questions go up to 20 × 20 = 400. R4.1–R4.3 describe the standard level; the hard level only changes the size and the number of robots.
+- R4.11 **Robot Maze – hard** is hidden for now: it has no home tile, no stats on the players screen and no section on the leaderboard, and its link no longer opens it. The Worker still accepts and ranks hard runs (R8.4). When shown, it is a separate game (`robot-maze-hard`, its own home tile, stats and rankings) with the same rules on a 20×20 maze with 20 robots. Rows and columns are numbered 1–20, so the questions go up to 20 × 20 = 400. R4.1–R4.3 describe the standard level; the hard level only changes the size and the number of robots.
 
 ## R5 – Quality
 
@@ -97,7 +97,7 @@ Education games is a static web app (HTML, CSS and ES-module JavaScript with no 
   - At most 3 wins per winner and opponent count per UTC day.
   - Reports are sent only when both players have an account.
 - R8.6 **Rankings.** `#/leaderboard`, linked from the header (🏆) on every screen, shows, for each game, the top 10 all-time and the top 10 this week (since Monday 00:00 UTC):
-  - Robot Maze and Robot Maze – hard, each with its own lists: each player's best time, fastest first.
+  - Robot Maze: each player's best time, fastest first. (Robot Maze – hard is hidden, R4.11.)
   - Tug of War: number of wins, most first.
   - The current player's row is highlighted.
   - The list is never cached, so a score shows as soon as it has been added.
