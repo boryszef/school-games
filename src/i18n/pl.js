@@ -3,6 +3,7 @@ export default {
   "header.choosePlayer": "Utwórz gracza",
   "header.leaderboard": "Ranking",
   "header.language": "Język",
+  "header.menu": "Menu",
   "home.title": "Wybierz grę",
   "home.noPlayer": "Najpierw utwórz gracza.",
   "home.choosePlayer": "Utwórz gracza",

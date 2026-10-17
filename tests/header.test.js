@@ -33,3 +33,60 @@ test("the header links to the leaderboard on every screen", () => {
   assert.equal(link.getAttribute("aria-label"), "Leaderboard");
   assert.ok(link.textContent?.includes("🏆"));
 });
+
+/** @param {HTMLElement} header */
+function drawer(header) {
+  const toggle = /** @type {HTMLButtonElement} */ (header.querySelector(".nav-toggle"));
+  return {
+    toggle,
+    isOpen: () => header.classList.contains("is-open"),
+    expanded: () => toggle.getAttribute("aria-expanded"),
+  };
+}
+
+test("the leaderboard, player and language controls are in the drawer's nav", () => {
+  const nav = render().querySelector("nav.site-nav");
+  assert.ok(nav, "no nav");
+  assert.ok(nav.querySelector('a[href="#/leaderboard"]'));
+  assert.ok(nav.querySelector('a[href="#/players"]'));
+  assert.ok(nav.querySelector("select.language"));
+});
+
+test("the menu button opens and closes the drawer", () => {
+  const header = render();
+  const { toggle, isOpen, expanded } = drawer(header);
+  assert.equal(toggle.getAttribute("aria-label"), "Menu");
+  assert.equal(toggle.getAttribute("aria-controls"), header.querySelector("nav")?.id);
+  assert.ok(!isOpen());
+  assert.equal(expanded(), "false");
+  toggle.click();
+  assert.ok(isOpen());
+  assert.equal(expanded(), "true");
+  toggle.click();
+  assert.ok(!isOpen());
+  assert.equal(expanded(), "false");
+});
+
+test("Esc closes the drawer", () => {
+  const header = render();
+  const { toggle, isOpen } = drawer(header);
+  toggle.click();
+  dom.document.dispatchEvent(new dom.KeyboardEvent("keydown", { key: "Escape" }));
+  assert.ok(!isOpen());
+});
+
+test("a tap outside the drawer closes it", () => {
+  const header = render();
+  const { toggle, isOpen } = drawer(header);
+  toggle.click();
+  /** @type {HTMLElement} */ (header.querySelector(".nav-backdrop")).click();
+  assert.ok(!isOpen());
+});
+
+test("following a link in the drawer closes it", () => {
+  const header = render();
+  const { toggle, isOpen } = drawer(header);
+  toggle.click();
+  /** @type {HTMLElement} */ (header.querySelector('nav a[href="#/players"]')).click();
+  assert.ok(!isOpen());
+});

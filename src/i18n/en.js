@@ -3,6 +3,7 @@ export default {
   "header.choosePlayer": "Create player",
   "header.leaderboard": "Leaderboard",
   "header.language": "Language",
+  "header.menu": "Menu",
   "home.title": "Choose a game",
   "home.noPlayer": "First create your player.",
   "home.choosePlayer": "Create player",

@@ -77,6 +77,12 @@ h1 {
   margin-right: auto;
 }
 
+.site-nav {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .player-link,
 .leaderboard-link {
   text-decoration: none;
@@ -87,14 +93,71 @@ h1 {
   margin-left: 4px;
 }
 
-/* On phones only the trophy shows; the link keeps its name for screen readers. */
-@media (max-width: 480px) {
-  .leaderboard-link {
+/* The ☰ button and the dimmed backdrop only exist on narrow screens (R10.6). */
+.nav-toggle,
+.nav-backdrop {
+  display: none;
+}
+
+@media (max-width: 599px) {
+  .nav-toggle {
+    display: block;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0;
     font-size: 1.5rem;
+    background: transparent;
+    color: var(--text);
   }
 
-  .leaderboard-label {
-    display: none;
+  .site-nav {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 21;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+    width: min(80vw, 280px);
+    padding: 16px;
+    background: var(--surface);
+    box-shadow: var(--shadow);
+    transform: translateX(100%);
+    visibility: hidden;
+    transition:
+      transform 200ms ease-out,
+      visibility 0s 200ms;
+  }
+
+  .site-nav > * {
+    min-height: 44px;
+  }
+
+  .site-nav a {
+    display: flex;
+    align-items: center;
+  }
+
+  .is-open .site-nav {
+    transform: none;
+    visibility: visible;
+    transition: transform 200ms ease-out;
+  }
+
+  .is-open .nav-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 20;
+    background: rgb(0 0 0 / 0.35);
+  }
+}
+
+@media (max-width: 599px) and (prefers-reduced-motion: reduce) {
+  .site-nav,
+  .is-open .site-nav {
+    transition: none;
   }
 }
 
