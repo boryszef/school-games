@@ -1,6 +1,6 @@
 export const messages = {
   pl: {
-    "colorInvasion.title": "Kolorowa inwazja",
+    "colorInvasion.title": "Inwazja kolorów",
     "colorInvasion.chooseLanguage": "W jakim języku chcesz ćwiczyć kolory?",
     "colorInvasion.goal": "Zestrzel klocek w kolorze, którego nazwę widzisz.",
     "colorInvasion.shootThis": "Strzelaj w:",
