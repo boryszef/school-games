@@ -169,7 +169,7 @@ function _playRound(root, ctx, level, restart, run) {
     const timeMs = totalMs();
     clock.textContent = formatTime(timeMs);
     const previousBestMs = ctx.bestTimeMs();
-    ctx.recordRun({ timeMs, penaltyMs: state.penaltyMs, mistakes: state.mistakes });
+    ctx.recordRun({ timeMs, penaltyMs: state.penaltyMs });
     log.info(`${level} robot maze finished in ${timeMs} ms with ${state.mistakes.length} mistakes`);
     stage.append(
       createResultPanel(

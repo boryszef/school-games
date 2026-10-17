@@ -1,13 +1,11 @@
 import { formatTime } from "../core/format.js";
 import { registerPlayer } from "../core/online/accounts.js";
 import { ApiError, ServerUnreachableError } from "../core/online/api.js";
-import { addPlayer, bestTime, missedFacts } from "../core/profiles.js";
+import { addPlayer, bestTime } from "../core/profiles.js";
 import { listGames } from "../core/registry.js";
 import { h } from "../core/ui/dom.js";
 
 /** @typedef {import("../core/app.js").App} App */
-
-const MISSED_FACTS_SHOWN = 10;
 
 /** @type {import("../core/app.js").Screen} */
 export function renderPlayers(root, app) {
@@ -71,7 +69,6 @@ function _playerStats(app, name) {
     h("h2", {}, name),
     ...listGames().map((game) => {
       const best = bestTime(data, game.id);
-      const missed = missedFacts(data, game.id).slice(0, MISSED_FACTS_SHOWN);
       return h(
         "article",
         { class: "game-stats" },
@@ -81,16 +78,6 @@ function _playerStats(app, name) {
           {},
           best === null ? t("players.noRuns") : t("players.bestTime", { time: formatTime(best) }),
         ),
-        missed.length === 0 ? "" : h("p", {}, t("players.missed")),
-        missed.length === 0
-          ? ""
-          : h(
-              "ul",
-              { class: "missed-facts" },
-              ...missed.map((f) =>
-                h("li", {}, t("players.missedFact", { a: f.row, b: f.col, count: f.count })),
-              ),
-            ),
         h("a", { href: `#/game/${game.id}`, class: "button" }, t("players.play")),
       );
     }),

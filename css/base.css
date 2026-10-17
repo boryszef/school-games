@@ -190,10 +190,6 @@ select {
   box-shadow: var(--shadow);
 }
 
-.missed-facts {
-  columns: 2;
-}
-
 /* On-screen number pad and direction pad (shared by games). */
 .numpad {
   display: grid;

@@ -1,6 +1,6 @@
 /** @typedef {import("./i18n.js").Translate} Translate */
 /** @typedef {import("./i18n.js").Dictionary} Dictionary */
-/** @typedef {Pick<import("./storage.js").Run, "timeMs" | "penaltyMs" | "mistakes">} RunResult */
+/** @typedef {Pick<import("./storage.js").Run, "timeMs" | "penaltyMs">} RunResult */
 /**
  * @typedef {object} GameContext
  * @property {{name: string, account: import("./storage.js").Account | null}} player

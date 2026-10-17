@@ -10,8 +10,6 @@ export default {
   "players.empty": "Nie masz jeszcze gracza.",
   "players.bestTime": "Najlepszy czas: {time}",
   "players.noRuns": "Jeszcze nie grano.",
-  "players.missed": "Najczęstsze pomyłki:",
-  "players.missedFact": "{a} × {b} – {count} raz(y)",
   "players.play": "Graj",
   "notFound.title": "Nie ma takiej strony.",
   "notFound.back": "Wróć do gier",

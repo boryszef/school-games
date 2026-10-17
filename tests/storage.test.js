@@ -63,7 +63,6 @@ test("version 1 data keeps only the selected player and their runs", () => {
     finishedAt: "2026-10-14T12:00:00.000Z",
     timeMs: 2000,
     penaltyMs: 0,
-    mistakes: [],
   };
   assert.deepEqual(loadData(storage), {
     lang: "en",
@@ -87,6 +86,20 @@ test("version 1 data without players has no player", () => {
   const storage = memoryStorage();
   storeVersion1(storage, { lang: "pl", currentPlayerId: null, players: {}, runs: [] });
   assert.deepEqual(loadData(storage), emptyData());
+});
+
+test("version 2 data loads without the mistakes its runs stored", () => {
+  const storage = memoryStorage();
+  const run = { gameId: "robot-maze", finishedAt: "x", timeMs: 9000, penaltyMs: 5000 };
+  const data = { lang: "en", player: ala, runs: [{ ...run, mistakes: [[7, 8]] }] };
+  storage.setItem(STORAGE_KEY, JSON.stringify({ version: 2, data }));
+  assert.deepEqual(loadData(storage), { lang: "en", player: ala, runs: [run] });
+});
+
+test("data is saved as version 3", () => {
+  const storage = memoryStorage();
+  saveData(storage, emptyData());
+  assert.equal(JSON.parse(/** @type {string} */ (storage.getItem(STORAGE_KEY))).version, 3);
 });
 
 test("an unknown stored version is an error", () => {

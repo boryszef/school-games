@@ -1,19 +1,17 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { emptyData } from "../src/core/storage.js";
-import { addPlayer, bestTime, missedFacts, recordRun, setAccount } from "../src/core/profiles.js";
+import { addPlayer, bestTime, recordRun, setAccount } from "../src/core/profiles.js";
 
 /**
  * @param {number} timeMs
- * @param {[number, number][]} [mistakes]
  * @param {string} [gameId]
  */
-const run = (timeMs, mistakes = [], gameId = "robot-maze") => ({
+const run = (timeMs, gameId = "robot-maze") => ({
   gameId,
   finishedAt: "2026-10-14T12:00:00.000Z",
   timeMs,
-  penaltyMs: mistakes.length * 5000,
-  mistakes,
+  penaltyMs: 0,
 });
 
 const account = { id: "i".repeat(22), token: "t".repeat(43) };
@@ -44,7 +42,7 @@ test("recordRun appends the run", () => {
 
 test("bestTime is the minimum time of the runs in that game", () => {
   let data = emptyData();
-  for (const r of [run(90000), run(70000), run(5000, [], "other")]) {
+  for (const r of [run(90000), run(70000), run(5000, "other")]) {
     data = recordRun(data, r);
   }
   assert.equal(bestTime(data, "robot-maze"), 70000);
@@ -52,49 +50,4 @@ test("bestTime is the minimum time of the runs in that game", () => {
 
 test("bestTime is null when the game has no runs", () => {
   assert.equal(bestTime(emptyData(), "robot-maze"), null);
-});
-
-test("missedFacts ranks the game's mistakes by count", () => {
-  let data = emptyData();
-  data = recordRun(
-    data,
-    run(1, [
-      [7, 8],
-      [6, 9],
-    ]),
-  );
-  data = recordRun(
-    data,
-    run(1, [
-      [7, 8],
-      [3, 4],
-    ]),
-  );
-  data = recordRun(data, run(1, [[7, 8]]));
-  data = recordRun(
-    data,
-    run(
-      1,
-      [
-        [3, 4],
-        [3, 4],
-        [3, 4],
-        [3, 4],
-      ],
-      "other",
-    ),
-  );
-
-  const facts = missedFacts(data, "robot-maze");
-  assert.deepEqual(facts[0], { row: 7, col: 8, count: 3 });
-  assert.deepEqual(
-    facts.slice(1).map((f) => f.count),
-    [1, 1],
-  );
-  assert.equal(facts.length, 3);
-});
-
-test("missedFacts is empty without mistakes", () => {
-  const data = recordRun(emptyData(), run(1));
-  assert.deepEqual(missedFacts(data, "robot-maze"), []);
 });

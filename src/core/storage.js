@@ -13,7 +13,6 @@ import { log } from "./log.js";
  * @property {string} finishedAt ISO date
  * @property {number} timeMs Total time, penalties included.
  * @property {number} penaltyMs
- * @property {[number, number][]} mistakes `[row, col]` of each wrong answer.
  */
 /**
  * @typedef {object} AppData
@@ -22,9 +21,10 @@ import { log } from "./log.js";
  * @property {Run[]} runs
  */
 /** @typedef {Pick<Storage, "getItem" | "setItem">} KeyValueStore */
+/** @typedef {Run & {mistakes: unknown}} OldRun A run as versions 1 and 2 stored it. */
 
 export const STORAGE_KEY = "schoolGames";
-const VERSION = 2;
+const VERSION = 3;
 
 /** @returns {AppData} */
 export function emptyData() {
@@ -42,6 +42,7 @@ export function loadData(store) {
   /** @type {AppData} */
   let data;
   if (stored.version === 1) data = _fromVersion1(stored.data);
+  else if (stored.version === 2) data = { ...stored.data, runs: stored.data.runs.map(_toRun) };
   else if (stored.version === VERSION) data = stored.data;
   else throw new Error(`Unsupported storage version ${stored.version}, expected ${VERSION}`);
   log.debug("data loaded", { player: data.player?.name ?? null, runs: data.runs.length });
@@ -57,9 +58,18 @@ export function saveData(store, data) {
 }
 
 /**
+ * Versions 1 and 2 also stored each run's wrong answers, which are no longer kept (R3.5).
+ * @param {OldRun} run
+ * @returns {Run}
+ */
+function _toRun({ gameId, finishedAt, timeMs, penaltyMs }) {
+  return { gameId, finishedAt, timeMs, penaltyMs };
+}
+
+/**
  * Version 1 could hold several players. Keeps the selected one, or the first, with their runs.
  * @param {{lang: string, currentPlayerId: string | null, players: Record<string, Player>,
- *   runs: (Run & {playerId: string})[]}} data
+ *   runs: (OldRun & {playerId: string})[]}} data
  * @returns {AppData}
  */
 function _fromVersion1(data) {
@@ -73,14 +83,6 @@ function _fromVersion1(data) {
   return {
     lang: data.lang,
     player: id === null ? null : data.players[id],
-    runs: data.runs
-      .filter((run) => run.playerId === id)
-      .map(({ gameId, finishedAt, timeMs, penaltyMs, mistakes }) => ({
-        gameId,
-        finishedAt,
-        timeMs,
-        penaltyMs,
-        mistakes,
-      })),
+    runs: data.runs.filter((run) => run.playerId === id).map(_toRun),
   };
 }

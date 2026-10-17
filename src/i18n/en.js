@@ -10,8 +10,6 @@ export default {
   "players.empty": "You don't have a player yet.",
   "players.bestTime": "Best time: {time}",
   "players.noRuns": "Not played yet.",
-  "players.missed": "Most missed:",
-  "players.missedFact": "{a} × {b} – {count} time(s)",
   "players.play": "Play",
   "notFound.title": "This page does not exist.",
   "notFound.back": "Back to games",
