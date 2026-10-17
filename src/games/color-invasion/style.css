@@ -297,32 +297,6 @@
   border-color: var(--accent);
 }
 
-.ci-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 10;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgb(0 0 0 / 0.35);
-}
-
-.ci-card {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  width: min(90%, 300px);
-  padding: 16px;
-  border-radius: var(--radius);
-  background: var(--surface);
-  box-shadow: var(--shadow);
-}
-
-.ci-card h2,
-.ci-card p {
-  margin: 0;
-}
-
 .ci-final-score {
   font-size: 1.6rem;
   font-weight: 700;

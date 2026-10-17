@@ -1,4 +1,5 @@
 import { h } from "../../core/ui/dom.js";
+import { createOverlayCard } from "../../core/ui/overlay.js";
 
 /** @typedef {import("../../core/i18n.js").Translate} Translate */
 /**
@@ -26,21 +27,11 @@ export function createResultPanel(t, { won, opponentName, onPlayAgain, onHome, s
           { type: "button", class: "button", onclick: onPlayAgain },
           t("tugOfWar.playAgain"),
         );
-  const element = h(
-    "div",
-    { class: "tw-overlay" },
-    h(
-      "div",
-      { class: "tw-panel" },
-      h("h2", {}, won ? t("tugOfWar.youWon") : t("tugOfWar.theyWon", { name: opponentName })),
-      submission ?? "",
-      again,
-      h(
-        "button",
-        { type: "button", class: "button secondary", onclick: onHome },
-        t("tugOfWar.home"),
-      ),
-    ),
+  const element = createOverlayCard(
+    h("h2", {}, won ? t("tugOfWar.youWon") : t("tugOfWar.theyWon", { name: opponentName })),
+    submission ?? "",
+    again,
+    h("button", { type: "button", class: "button secondary", onclick: onHome }, t("tugOfWar.home")),
   );
   return {
     element,

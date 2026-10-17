@@ -34,7 +34,7 @@ function play(root, actions) {
     const input = /** @type {HTMLInputElement} */ (root.querySelector(".rm-answer"));
     input.value = String(action.answer);
     root
-      .querySelector("form.rm-card")
+      .querySelector("form.overlay-card")
       ?.dispatchEvent(new dom.Event("submit", { cancelable: true }));
   }
 }
@@ -44,7 +44,7 @@ const boardShown = (root) => () => root.querySelector(".rm-board") !== null;
 
 /** @param {HTMLElement} root */
 const resultCard = (root) =>
-  /** @type {HTMLElement} */ ([...root.querySelectorAll(".rm-card")].at(-1));
+  /** @type {HTMLElement} */ ([...root.querySelectorAll(".overlay-card")].at(-1));
 
 test("a registered player's maze is timed by the Worker and added to the leaderboard", async () => {
   const worker = workerSetup();

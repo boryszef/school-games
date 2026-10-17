@@ -241,6 +241,38 @@ select {
   grid-area: right;
 }
 
+/* A card over a dimmed game: results, questions and messages (shared by games). */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgb(0 0 0 / 0.35);
+}
+
+.overlay[hidden] {
+  display: none;
+}
+
+.overlay-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: min(90%, 300px);
+  padding: 16px;
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  text-align: center;
+}
+
+.overlay-card h2,
+.overlay-card p {
+  margin: 0;
+}
+
 /* Connecting two players (shared by two-player games). */
 .lobby {
   display: flex;

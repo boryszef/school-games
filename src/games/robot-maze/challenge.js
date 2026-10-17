@@ -31,14 +31,14 @@ export function createChallengeDialog(t, onSubmit) {
   );
   const form = h(
     "form",
-    { class: "rm-card" },
+    { class: "overlay-card" },
     h("div", { class: "rm-robot" }, "🤖"),
     question,
     input,
     feedback,
     numpad,
   );
-  const element = h("div", { class: "rm-overlay", hidden: true }, form);
+  const element = h("div", { class: "overlay", hidden: true }, form);
 
   input.addEventListener("input", () => (input.value = input.value.replace(/\D/g, "")));
   form.addEventListener("submit", (event) => {

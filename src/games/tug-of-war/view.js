@@ -1,4 +1,5 @@
 import { h } from "../../core/ui/dom.js";
+import { createOverlayCard } from "../../core/ui/overlay.js";
 import { createQuestionCard } from "./question.js";
 import { createResultPanel } from "./result.js";
 import { createRope } from "./rope.js";
@@ -49,15 +50,9 @@ export function createMatchView(root, { t, myName, onCorrect, onPlayAgain, onHom
   /** @param {string} key */
   const showMessage = (key) =>
     showOverlay(
-      h(
-        "div",
-        { class: "tw-overlay" },
-        h(
-          "div",
-          { class: "tw-panel" },
-          h("p", {}, t(key)),
-          h("button", { type: "button", class: "button", onclick: onHome }, t("tugOfWar.home")),
-        ),
+      createOverlayCard(
+        h("p", {}, t(key)),
+        h("button", { type: "button", class: "button", onclick: onHome }, t("tugOfWar.home")),
       ),
     );
 

@@ -1,5 +1,6 @@
 import { formatTime } from "../../core/format.js";
 import { h } from "../../core/ui/dom.js";
+import { createOverlayCard } from "../../core/ui/overlay.js";
 
 /** @typedef {import("../../core/i18n.js").Translate} Translate */
 /**
@@ -23,27 +24,21 @@ export function createResultPanel(t, summary, actions, submission) {
       ? h("p", {}, t("robotMaze.best", { time: formatTime(previousBestMs) }))
       : h("p", { class: "rm-new-best" }, t("robotMaze.newBest"));
 
-  return h(
-    "div",
-    { class: "rm-overlay" },
+  return createOverlayCard(
+    h("h2", {}, t("robotMaze.finished")),
+    h("p", { class: "rm-final-time" }, t("robotMaze.yourTime", { time: formatTime(timeMs) })),
+    h("p", {}, t("robotMaze.mistakes", { count: mistakes })),
+    record,
+    submission ?? "",
     h(
-      "div",
-      { class: "rm-card" },
-      h("h2", {}, t("robotMaze.finished")),
-      h("p", { class: "rm-final-time" }, t("robotMaze.yourTime", { time: formatTime(timeMs) })),
-      h("p", {}, t("robotMaze.mistakes", { count: mistakes })),
-      record,
-      submission ?? "",
-      h(
-        "button",
-        { type: "button", class: "button", onclick: actions.onPlayAgain },
-        t("robotMaze.playAgain"),
-      ),
-      h(
-        "button",
-        { type: "button", class: "button secondary", onclick: actions.onHome },
-        t("robotMaze.home"),
-      ),
+      "button",
+      { type: "button", class: "button", onclick: actions.onPlayAgain },
+      t("robotMaze.playAgain"),
+    ),
+    h(
+      "button",
+      { type: "button", class: "button secondary", onclick: actions.onHome },
+      t("robotMaze.home"),
     ),
   );
 }

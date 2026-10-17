@@ -135,30 +135,3 @@
     transform: translateX(-4px);
   }
 }
-
-.tw-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 10;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgb(0 0 0 / 0.35);
-}
-
-.tw-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  width: min(90%, 300px);
-  padding: 16px;
-  border-radius: var(--radius);
-  background: var(--surface);
-  box-shadow: var(--shadow);
-  text-align: center;
-}
-
-.tw-panel h2,
-.tw-panel p {
-  margin: 0;
-}

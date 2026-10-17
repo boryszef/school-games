@@ -57,14 +57,14 @@ function shootAt(root, aim) {
 }
 
 /** @param {HTMLElement} root */
-const cardText = (root) => one(root, ".ci-card").textContent;
+const cardText = (root) => one(root, ".overlay-card").textContent;
 
 /** @param {HTMLElement} root */
 const boardShown = (root) => () => root.querySelector(".ci-board") !== null;
 
 /** The card is shown, and a score being sent has had its answer. */
 const roundOver = (/** @type {HTMLElement} */ root) => () =>
-  root.querySelector(".ci-card") !== null && !cardText(root).includes("Sending…");
+  root.querySelector(".overlay-card") !== null && !cardText(root).includes("Sending…");
 
 test("a registered player's round is checked by the Worker and added to the leaderboard", async () => {
   const clock = fakeClock();
@@ -111,13 +111,13 @@ test("the result card's buttons start a new round or leave the game", async () =
   await until(roundOver(root));
 
   const [playAgain, home] = /** @type {HTMLElement[]} */ ([
-    ...root.querySelectorAll(".ci-card button"),
+    ...root.querySelectorAll(".overlay-card button"),
   ]);
   home.click();
   assert.equal(ctx.exited, true);
   playAgain.click();
   await until(boardShown(root));
-  assert.equal(root.querySelector(".ci-card"), null);
+  assert.equal(root.querySelector(".overlay-card"), null);
   assert.equal(one(root, ".ci-score").textContent, "Points: 0");
 });
 
