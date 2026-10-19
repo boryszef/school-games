@@ -1,13 +1,14 @@
 export const messages = {
   pl: {
-    "pirateLoot.title": "Łup piratów",
+    "pirateLoot.title": "Skarb piratów",
     "pirateLoot.preparing": "Przygotowuję statek…",
     "pirateLoot.goal":
       "Dziel każdy skarb sprawiedliwie między załogę. Jedna pomyłka i piraci wyrzucą cię za burtę!",
     "pirateLoot.trip": "Rejs {trip}",
     "pirateLoot.loot": "Łup: {loot} 🪙",
     "pirateLoot.treasure": "Skarb: {coins} złotych monet",
-    "pirateLoot.question": "Ile monet dostanie każdy z {crew} piratów?",
+    "pirateLoot.question":
+      "Znaleźliście skrzynię z {coins} złotymi monetami. Ile monet dostanie każdy z {crew} piratów?",
     "pirateLoot.answer": "Monety dla każdego pirata",
     "pirateLoot.timeLeft": "{seconds} s",
     "pirateLoot.cheer": "Hura! Każdy pirat dostał {share} 🪙",
@@ -15,7 +16,7 @@ export const messages = {
     "pirateLoot.retire": "Zejdź na ląd z łupem: {loot} 🪙",
     "pirateLoot.retiredTitle": "Bezpieczny powrót!",
     "pirateLoot.retiredLoot": "Twój łup: {loot} 🪙",
-    "pirateLoot.overboardTitle": "Do rekinów!",
+    "pirateLoot.overboardTitle": "Za burtę!",
     "pirateLoot.overboardText": "Załoga wyrzuciła cię za burtę. Łup przepadł: {loot} 🪙",
     "pirateLoot.rightAnswer": "{treasure} ÷ {crew} = {share}",
     "pirateLoot.tripsWon": "Udane rejsy: {count}",
@@ -30,7 +31,8 @@ export const messages = {
     "pirateLoot.trip": "Trip {trip}",
     "pirateLoot.loot": "Loot: {loot} 🪙",
     "pirateLoot.treasure": "Treasure: {coins} gold coins",
-    "pirateLoot.question": "How many coins does each of the {crew} pirates get?",
+    "pirateLoot.question":
+      "You found {coins} gold coins. How many coins does each of the {crew} pirates get?",
     "pirateLoot.answer": "Coins for each pirate",
     "pirateLoot.timeLeft": "{seconds} s",
     "pirateLoot.cheer": "Hooray! Every pirate got {share} 🪙",
@@ -38,7 +40,7 @@ export const messages = {
     "pirateLoot.retire": "Go ashore with the loot: {loot} 🪙",
     "pirateLoot.retiredTitle": "Home safe!",
     "pirateLoot.retiredLoot": "Your loot: {loot} 🪙",
-    "pirateLoot.overboardTitle": "To the sharks!",
+    "pirateLoot.overboardTitle": "Overboard!",
     "pirateLoot.overboardText": "The crew threw you overboard. The loot is lost: {loot} 🪙",
     "pirateLoot.rightAnswer": "{treasure} ÷ {crew} = {share}",
     "pirateLoot.tripsWon": "Trips won: {count}",

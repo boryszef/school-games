@@ -121,7 +121,7 @@ function _playGame(root, ctx, run, playAgain) {
   }
 
   function ask() {
-    panel.ask(state.crew);
+    panel.ask(state.crew, state.treasure);
     timer = createTimer();
     timer.start();
     patienceTicker = setInterval(checkPatience, PATIENCE_REFRESH_MS);

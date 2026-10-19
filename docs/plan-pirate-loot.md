@@ -2,13 +2,13 @@
 
 ## Summary
 
-A new single-player game, **Pirate Loot / Łup piratów** (`pirate-loot`, icon 🏴‍☠️), for memorizing divisions with whole-number answers up to 100. The player is a pirate captain. Each trip:
+A new single-player game, **Pirate Loot / Skarb piratów** (`pirate-loot`, icon 🏴‍☠️), for memorizing divisions with whole-number answers up to 100. The player is a pirate captain. Each trip:
 
 1. A random crew of 2–10 pirates comes aboard (the captain counts as one of them).
 2. The ship sails to an island and finds a chest with crew × share coins, where the share is 1–10.
 3. The captain types how many coins each pirate gets, before the crew runs out of patience.
 4. A right answer adds the captain's share to the loot. Then the player either sails again or retires with the loot.
-5. A wrong or late answer gets the captain thrown to the sharks, and the loot is lost.
+5. A wrong or late answer gets the captain thrown overboard, and the loot is lost.
 
 The crew's patience gets shorter every trip: 15 s on the first one, 1 s less each trip after that, down to 4 s. Retiring sends the loot to the leaderboard. The Worker checks it by replaying the game from its own seed, the same way as Color Invasion scores.
 
@@ -39,10 +39,10 @@ Workflow (project rules): plan → requirements in `docs/` → failing tests for
   - `sailAgain(state, rng)`: the next trip with a new crew and treasure, never the same pair as the trip before.
   - `retire(state)`: `status: "retired"`.
 - **`pirates.js`**: a few inline-SVG pirate parts (hats, bandanas, eyepatch, parrot, hook), combined at random so each crew looks different.
-- **`scene.js`**: the DOM/SVG view of the ship, crew, chest, coin piles, plank and shark, with CSS animations for coming aboard, sailing, opening the chest, dealing coins, cheering and walking the plank. The state changes at once; the animations are only visual. The pirates, the plank and the walk are sized from the ship's width (container query units), so up to 10 pirates fit on a 360 px screen.
+- **`scene.js`**: the DOM/SVG view of the ship, crew, chest, coin piles, plank and splash, with CSS animations for coming aboard, sailing, opening the chest, dealing coins, cheering and walking the plank. The state changes at once; the animations are only visual. The pirates, the plank and the walk are sized from the ship's width (container query units), so up to 10 pirates fit on a 360 px screen.
 - **`panel.js`**: under the scene, the question with the answer field, the patience fuse and the number pad (`createNumpad`, `src/core/ui/numpad.js`); after a won trip, the choice between sailing again and retiring.
 - **`index.js`**: the `GameDefinition`. It runs the trips and the patience timer (`createTimer`, `src/core/timer.js`), records the actions, sends a retired captain's game to the Worker and shows the result. A game that ends overboard isn't sent: it has no score, and "Added!" for it would be misleading.
-- **`result.js`**: the result card (`createOverlayCard`, `src/core/ui/overlay.js`). It shows either "retired with X 🪙" or "thrown to the sharks" with the right division (`42 ÷ 6 = 7`). It also shows the number of trips, "Play again" and "Choose another game", and the leaderboard status as in Color Invasion.
+- **`result.js`**: the result card (`createOverlayCard`, `src/core/ui/overlay.js`). It shows either "retired with X 🪙" or "thrown overboard" with the right division (`42 ÷ 6 = 7`). It also shows the number of trips, "Play again" and "Choose another game", and the leaderboard status as in Color Invasion.
 - **`i18n.js`**, **`style.css`** (prefix `pl-`, theme tokens from `css/base.css`, reduced motion respected).
 
 ### Worker

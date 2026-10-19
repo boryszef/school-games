@@ -148,10 +148,10 @@ Education games is a static web app (HTML, CSS and ES-module JavaScript with no 
 - R11.1 **Pirate Loot** (`pirate-loot`, icon 🏴‍☠️) is a single-player game that practises division. The player is a pirate captain who goes on trips for treasure.
 - R11.2 Each trip, a random crew of 2–10 pirates comes aboard. The captain is one of them. Every pirate looks a little different.
 - R11.3 The ship sails to an island and finds a chest of `crew × share` gold coins, where the share is a random whole number from 1 to 10. The treasure therefore always splits evenly and is at most 100. A trip never has the same crew and treasure as the trip before.
-- R11.4 The game asks how many coins each pirate gets. The captain types the answer on the keyboard or with the on-screen number pad.
+- R11.4 The game says how many coins were found and asks how many each pirate gets. The captain types the answer on the keyboard or with the on-screen number pad.
 - R11.5 The crew is impatient. On the first trip the captain has 15 s to answer, and on every later trip 1 s less, but never less than 4 s. The time left is shown.
 - R11.6 A right answer in time deals the coins into equal piles, one per pirate, and the crew cheers. The captain's share is added to the loot. The captain then chooses "Sail again" or "Retire with the loot".
-- R11.7 A wrong answer, or no answer in time, makes the crew angry. They throw the captain to the sharks, the loot is lost and the game ends.
+- R11.7 A wrong answer, or no answer in time, makes the crew angry. They throw the captain overboard, the loot is lost and the game ends.
 - R11.8 Retiring ends the game with the loot as the score.
 - R11.9 At the end a result card shows the loot (or that it was lost), the number of trips and, after a mistake, the right division (`42 ÷ 6 = 7`). It offers "Play again" and "Choose another game".
 - R11.10 The game is drawn with HTML, CSS and inline SVG. The trips are animated (coming aboard, sailing, opening the chest, dealing the coins, cheering, walking the plank). With reduced motion turned on in the system, nothing moves.

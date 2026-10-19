@@ -47,10 +47,6 @@ const CHEST_SVG = `<svg viewBox="0 0 48 40" aria-hidden="true">
   <path class="pl-lid" d="M4 18 Q24 2 44 18Z" fill="#a1662f" stroke="#4e342e" stroke-width="2"/>
 </svg>`;
 
-const SHARK_SVG = `<svg class="pl-shark" viewBox="0 0 40 24" aria-hidden="true">
-  <path d="M4 24 Q22 18 26 0 Q30 16 38 24Z" fill="#607d8b"/>
-</svg>`;
-
 /** @param {Translate} t */
 export function createScene(t) {
   const deck = h("div", { class: "pl-deck" });
@@ -65,7 +61,6 @@ export function createScene(t) {
   ship.insertAdjacentHTML("afterbegin", RIG_SVG);
   ship.insertAdjacentHTML("beforeend", SHIP_SVG);
   const sea = h("div", { class: "pl-sea" }, h("div", { class: "pl-splash" }));
-  sea.insertAdjacentHTML("beforeend", SHARK_SVG);
   const element = h("div", { class: "pl-stage" }, island, ship, sea);
 
   /** @param {ScenePhase} phase */
@@ -107,7 +102,7 @@ export function createScene(t) {
       }
       setPhase("cheering");
     },
-    /** The crew gets angry and the captain walks the plank to the sharks. */
+    /** The crew gets angry and the captain walks the plank into the sea. */
     overboard() {
       setPhase("overboard");
     },

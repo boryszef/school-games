@@ -68,9 +68,12 @@ export function createPanel(t, { onAnswer, onSail, onRetire }) {
 
   return {
     element,
-    /** @param {number} crew */
-    ask(crew) {
-      question.textContent = t("pirateLoot.question", { crew });
+    /**
+     * @param {number} crew
+     * @param {number} coins
+     */
+    ask(crew, coins) {
+      question.replaceChildren(..._highlightNumbers(t("pirateLoot.question", { crew, coins })));
       input.value = "";
       choice.hidden = true;
       form.hidden = false;
@@ -100,4 +103,14 @@ export function createPanel(t, { onAnswer, onSail, onRetire }) {
       choice.hidden = true;
     },
   };
+}
+
+/**
+ * The numbers in a text wrapped in spans, so they stand out from the words.
+ * @param {string} text
+ */
+function _highlightNumbers(text) {
+  return text
+    .split(/(\d+)/)
+    .map((part, i) => (i % 2 === 1 ? h("span", { class: "pl-number" }, part) : part));
 }
