@@ -28,6 +28,7 @@ export const pirateLoot = {
   id: "pirate-loot",
   titleKey: "pirateLoot.title",
   icon: "🏴‍☠️",
+  subject: "math",
   messages,
   mount(root, ctx) {
     loadStylesheet(new URL("./style.css", import.meta.url).href);

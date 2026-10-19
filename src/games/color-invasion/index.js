@@ -29,6 +29,7 @@ export const colorInvasion = {
   id: "color-invasion",
   titleKey: "colorInvasion.title",
   icon: "👾",
+  subject: "languages",
   messages,
   mount(root, ctx) {
     loadStylesheet(new URL("./style.css", import.meta.url).href);

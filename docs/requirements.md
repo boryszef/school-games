@@ -8,10 +8,11 @@ Education games is a static web app (HTML, CSS and ES-module JavaScript with no 
 
 - R1.1 The app is static files only, with one exception: the small Cloudflare Worker in `worker/` (free tier, R6), which accepts requests only from the app's own origins. Nothing is fetched from a CDN or installed from npm at runtime. Third-party code is allowed only as a vendored, licence-compatible file under `src/vendor/` with its source and licence noted in a header. It must be served over HTTP(S) because it uses ES modules.
 - R1.2 Hash routing: `#/` home (list of games), `#/players` (profiles), `#/leaderboard` (R8), `#/game/<id>` (a game) and `#/game/<id>/<arg>`, where `<arg>` is the rest of the hash, passed to the game.
-- R1.3 A game is a module that registers a `GameDefinition` (`id`, `titleKey`, `icon`, `messages: {pl, en}`, `mount(root, ctx) → unmount`). The `GameContext` passed to `mount` provides `player` (`{name, account}`), `t`, `recordRun(result)`, `exit()` and `arg` (the route's `<arg>`, or `null`). Adding a game means adding a folder under `src/games/` and one registration line.
+- R1.3 A game is a module that registers a `GameDefinition` (`id`, `titleKey`, `icon`, `subject`, `messages: {pl, en}`, `mount(root, ctx) → unmount`). The `GameContext` passed to `mount` provides `player` (`{name, account}`), `t`, `recordRun(result)`, `exit()` and `arg` (the route's `<arg>`, or `null`). Adding a game means adding a folder under `src/games/` and one registration line.
 - R1.4 The on-screen number pad and the card shown over a game (results, questions, messages) are reusable core UI components.
 - R1.5 Logging goes through a small logger. Debug output is enabled with `?debug=1`.
 - R1.6 Only the page served from `boryszef.github.io` talks to the production Worker. A page served from any other host (`localhost`, `127.0.0.1`, the computer's Wi-Fi address) talks to `http://<that host>:8787`, the local Worker with its local database. The production Worker accepts only the `https://boryszef.github.io` origin. The local Worker also accepts the origins listed in `DEV_ORIGINS`, which `npm run dev` sets and the deployed Worker never has.
+- R1.8 The home screen groups the games by subject (`subject` in R1.3), each group under its own heading with its own tiles: first 🧮 Math (Matematyka) with Robot Maze, Tug of War and Pirate Loot, then 🌍 Foreign languages (Języki obce) with Color Invasion.
 
 ## R2 – Internationalisation
 

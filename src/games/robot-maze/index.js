@@ -51,6 +51,7 @@ function _robotMaze({ id, titleKey, icon, level }) {
     id,
     titleKey,
     icon,
+    subject: "math",
     messages,
     mount(root, ctx) {
       loadStylesheet(new URL("./style.css", import.meta.url).href);

@@ -63,7 +63,7 @@ Workflow (project rules): plan → requirements in `docs/` → failing tests for
 - `src/main.js`: `registerGame(pirateLoot)`.
 - `src/games/pirate-loot/index.js` uses `startServerRun` / `finishServerRun` (`src/core/online/server-run.js`) and `submitToLeaderboard` (`src/core/ui/leaderboard-submit.js`).
 - `src/screens/leaderboard.js`: a Pirate Loot section with a "Gold" column.
-- `css/base.css` + `fonts/emoji-subset.woff2`: the emoji used (🏴‍☠️, 🪙, ⛵, 🦈), enforced by `tests/emoji-font.test.js`.
+- `css/base.css` + `fonts/emoji-subset.woff2`: the emoji used (🏴‍☠️, 🪙, ⛵), enforced by `tests/emoji-font.test.js`.
 - `docs/requirements.md`: R11 (rules), R8.7 (scores), R8.8 (rankings), R5.1, R10.2.
 - `README.md`: the game's description.
 

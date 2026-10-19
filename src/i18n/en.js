@@ -7,6 +7,8 @@ export default {
   "home.title": "Choose a game",
   "home.noPlayer": "First create your player.",
   "home.choosePlayer": "Create player",
+  "home.subject.math": "🧮 Math",
+  "home.subject.languages": "🌍 Foreign languages",
   "players.title": "Player",
   "players.empty": "You don't have a player yet.",
   "players.bestTime": "Best time: {time}",

@@ -9,6 +9,7 @@ export const tugOfWar = {
   id: "tug-of-war",
   titleKey: "tugOfWar.title",
   icon: "🪢",
+  subject: "math",
   messages,
   mount(root, ctx) {
     loadStylesheet(new URL("./style.css", import.meta.url).href);

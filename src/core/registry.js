@@ -16,9 +16,12 @@
  * @property {string} id Used in the URL: `#/game/<id>`.
  * @property {string} titleKey
  * @property {string} icon
+ * @property {Subject} subject The home screen groups the games by it (R1.8).
  * @property {Record<string, Dictionary>} messages Per-language dictionaries.
  * @property {(root: HTMLElement, ctx: GameContext) => () => void} mount Returns unmount.
  */
+
+/** @typedef {"math" | "languages"} Subject */
 
 /** @type {Map<string, GameDefinition>} */
 const games = new Map();
