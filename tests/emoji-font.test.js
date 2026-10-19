@@ -1,5 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { readFileSync, readdirSync } from "node:fs";
 
 const root = new URL("../", import.meta.url);
@@ -28,4 +29,11 @@ test("every emoji the app shows is in the fallback emoji font", () => {
     }
   }
   assert.deepEqual([...missing], []);
+});
+
+test("the emoji font's URL changes whenever the font does", () => {
+  const css = readFileSync(new URL("css/base.css", root), "utf8");
+  const version = /emoji-subset\.woff2\?v=(\w+)/.exec(css)?.[1];
+  const font = readFileSync(new URL("fonts/emoji-subset.woff2", root));
+  assert.equal(version, createHash("sha256").update(font).digest("hex").slice(0, 8));
 });

@@ -4,10 +4,12 @@
  * When adding emoji to the UI, rebuild it and extend unicode-range below:
  *   uvx --from 'fonttools[woff]==4.60.1' pyftsubset Noto-COLRv1.ttf --unicodes=<list> \
  *     --layout-features='*' --flavor=woff2 --output-file=fonts/emoji-subset.woff2
+ * then set ?v= in src to the first 8 characters of its sha256sum. Browsers keep a loaded font
+ * under its URL, so without a new URL they go on showing the old one with missing emoji.
  */
 @font-face {
   font-family: "Education Games Emoji";
-  src: url("../fonts/emoji-subset.woff2") format("woff2");
+  src: url("../fonts/emoji-subset.woff2?v=a44e585c") format("woff2");
   unicode-range:
     U+1F9D2, U+1F916, U+1F3C1, U+1F3C6, U+1F464, U+1F393, U+23F1, U+FE0F, U+1FAA2, U+1F9BE, U+1F47E,
     U+1F680, U+1F525, U+1F3F4, U+200D, U+2620, U+1FA99, U+26F5, U+1F9EE, U+1F30D;
