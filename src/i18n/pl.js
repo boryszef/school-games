@@ -55,6 +55,7 @@ export default {
   "leaderboard.time": "Czas",
   "leaderboard.wins": "Wygrane",
   "leaderboard.points": "Punkty",
+  "leaderboard.gold": "Złoto",
   "leaderboard.sending": "Wysyłam…",
   "leaderboard.added": "Dodano!",
   "leaderboard.failed": "Nie udało się wysłać.",

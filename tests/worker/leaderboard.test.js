@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { playColors } from "../helpers/color-player.js";
 import { solveActions } from "../helpers/maze-solver.js";
+import { playPirates } from "../helpers/pirate-player.js";
 import { workerSetup } from "../helpers/worker.js";
 
 /** @typedef {import("../helpers/worker.js").TestPlayer} TestPlayer */
@@ -69,8 +70,26 @@ function helpers(worker) {
     });
     assert.equal(finished.status, 200);
   };
+  /**
+   * Plays a Pirate Loot game.
+   * @param {TestPlayer} player
+   * @param {import("../helpers/pirate-player.js").PiratePlan} plan
+   * @returns {Promise<number>} The score.
+   */
+  const playPirateGame = async (player, plan) => {
+    const started = await worker.call("POST", "/pirate-runs", { token: player.token, body: {} });
+    const { runId, seed } = await started.json();
+    const { actions, answerMs } = playPirates(seed, plan);
+    worker.advance(answerMs);
+    const finished = await worker.call("POST", `/pirate-runs/${runId}/finish`, {
+      token: player.token,
+      body: { actions },
+    });
+    assert.equal(finished.status, 200);
+    return (await finished.json()).score;
+  };
   const board = async () => (await worker.call("GET", "/leaderboard")).json();
-  return { playMaze, duel, playColorRound, board };
+  return { playMaze, duel, playColorRound, playPirateGame, board };
 }
 
 test("an empty leaderboard has empty lists and is never cached", async () => {
@@ -88,6 +107,7 @@ test("an empty leaderboard has empty lists and is never cached", async () => {
       de: { allTime: [], week: [] },
       es: { allTime: [], week: [] },
     },
+    pirates: { allTime: [], week: [] },
   });
 });
 
@@ -216,4 +236,46 @@ test("the weekly color list starts on Monday 00:00 UTC", async () => {
   const { es } = (await board()).colors;
   assert.equal(es.allTime.length, 2);
   assert.deepEqual(es.week, [{ nickname: ola.nickname, score: 1 }]);
+});
+
+test("the pirate list shows each player's best loot, highest first", async () => {
+  const worker = workerSetup();
+  const { playPirateGame, board } = helpers(worker);
+  const [ala, ola] = [await worker.newPlayer(), await worker.newPlayer()];
+  // One trip brings at most 10 coins, eleven trips at least 11.
+  const alaBest = await playPirateGame(ala, { trips: 1, end: "retire" });
+  const olaBest = await playPirateGame(ola, { trips: 11, end: "retire" });
+  await playPirateGame(ola, { trips: 1, end: "retire" });
+  await playPirateGame(ala, { trips: 4, end: "wrong" });
+
+  assert.deepEqual((await board()).pirates.allTime, [
+    { nickname: ola.nickname, score: olaBest },
+    { nickname: ala.nickname, score: alaBest },
+  ]);
+});
+
+test("captains who only went overboard are not on the pirate list", async () => {
+  const worker = workerSetup();
+  const { playPirateGame, board } = helpers(worker);
+  const [ala, ola] = [await worker.newPlayer(), await worker.newPlayer()];
+  const alaBest = await playPirateGame(ala, { trips: 2, end: "retire" });
+  await playPirateGame(ola, { trips: 3, end: "silent" });
+
+  const { pirates } = await board();
+  assert.deepEqual(pirates.allTime, [{ nickname: ala.nickname, score: alaBest }]);
+  assert.deepEqual(pirates.week, pirates.allTime);
+});
+
+test("the weekly pirate list starts on Monday 00:00 UTC", async () => {
+  const worker = workerSetup(SUNDAY_LATE);
+  const { playPirateGame, board } = helpers(worker);
+  const [ala, ola] = [await worker.newPlayer(), await worker.newPlayer()];
+  await playPirateGame(ala, { trips: 2, end: "retire" });
+
+  worker.setTime(MONDAY_MORNING);
+  const olaBest = await playPirateGame(ola, { trips: 1, end: "retire" });
+
+  const { pirates } = await board();
+  assert.equal(pirates.allTime.length, 2);
+  assert.deepEqual(pirates.week, [{ nickname: ola.nickname, score: olaBest }]);
 });

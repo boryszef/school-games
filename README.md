@@ -30,6 +30,12 @@ The browsers talk to each other over a WebRTC data channel (`src/core/net/`). To
 
 Game traffic never passes through any server. Cloudflare's free STUN server tells each browser its public address. There is no TURN relay, because Cloudflare TURN needs a payment card on file. So some strict networks (some schools, offices and mobile carriers) block the direct connection, and the game then says so. Players on the same Wi-Fi almost always connect.
 
+### 🏴‍☠️ Pirate Loot (Łup piratów)
+
+Practises division, the 10×10 multiplication table backwards. The player is a pirate captain. On each trip a crew of 2–10 pirates (the captain included) finds a chest of up to 100 gold coins, and the captain types how many coins each pirate gets. The treasure always splits evenly, so every answer is 1–10.
+
+The crew is impatient: 15 seconds to answer on the first trip, a second less on every trip after that, down to 4 seconds. A right answer adds the captain's share to the loot, and the captain chooses to sail again or retire with the loot. A wrong or late answer gets the captain thrown to the sharks, and the loot is lost.
+
 ## Players and the leaderboard
 
 There are no typed names. **New player** asks the Worker for a nickname `<Color><Animal><N>`, such as `RedFox1`. The Worker picks the color and animal at random, and `N` is the next free number for that pair, so nicknames are unique. Creating a player therefore needs internet; playing doesn't. Players created before nicknames existed are renamed automatically the next time the app starts online.
@@ -37,6 +43,7 @@ There are no typed names. **New player** asks the Worker for a nickname `<Color>
 After every finished game the score is added to the leaderboard automatically (`#/leaderboard`, top 10 per game, all-time and this week):
 
 - **Robot Maze** times are measured by the Worker, not the browser. The maze is built from a seed the Worker hands out when the round starts. When the round ends, the Worker replays the recorded moves and answers with the game's own rules (`src/games/robot-maze/state.js`). It counts the run only if the replay reaches the flag, and the time is its own clock plus the penalties.
+- **Pirate Loot** scores are the loot of a captain who retired. Like Robot Maze, every crew and treasure comes from the Worker's seed, and the Worker replays the answers to get the loot. A game that ends with the sharks has no score and isn't sent.
 - **Tug of War** wins count only when both players' reports agree, and at most 3 wins against the same opponent count per day.
 
 Each player has a secret token, of which the Worker keeps only a hash. The Worker stores no IP addresses.

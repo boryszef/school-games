@@ -7,12 +7,13 @@ import { randomId } from "./ids.js";
  * A table of server-checked game runs. Both names are constants in the code, never input.
  * @typedef {object} RunTableName
  * @property {string} name
- * @property {string} variant The column that tells the runs apart, such as the level.
+ * @property {string | null} variant The column that tells the runs apart, such as the level;
+ *   null for a game with one kind of run.
  */
 /**
  * @typedef {object} StoredRun
  * @property {number} seed
- * @property {string} variant
+ * @property {string | null} variant
  * @property {number} startedAt
  * @property {boolean} finished
  */
@@ -30,7 +31,7 @@ export function createRunTable({ db, now, randomBytes }, { name, variant }) {
   return {
     /**
      * @param {string} playerId
-     * @param {string} variantValue
+     * @param {string | null} variantValue Null when the table has no variant.
      * @returns {Promise<{runId: string, seed: number}>}
      */
     async start(playerId, variantValue) {
@@ -40,11 +41,14 @@ export function createRunTable({ db, now, randomBytes }, { name, variant }) {
         .run();
       const runId = randomId(randomBytes);
       const seed = new DataView(randomBytes(4).buffer).getUint32(0);
+      const columns = { id: runId, player_id: playerId, seed, started_at: now() };
+      if (variant !== null) Object.assign(columns, { [variant]: variantValue });
       await db
         .prepare(
-          `INSERT INTO ${name} (id, player_id, seed, ${variant}, started_at) VALUES (?, ?, ?, ?, ?)`,
+          `INSERT INTO ${name} (${Object.keys(columns).join(", ")})
+           VALUES (${Object.keys(columns).fill("?").join(", ")})`,
         )
-        .bind(runId, playerId, seed, variantValue, now())
+        .bind(...Object.values(columns))
         .run();
       return { runId, seed };
     },
@@ -57,7 +61,7 @@ export function createRunTable({ db, now, randomBytes }, { name, variant }) {
     async find(runId, playerId) {
       const row = await db
         .prepare(
-          `SELECT seed, ${variant} AS variant, started_at, finished_at FROM ${name}
+          `SELECT seed, ${variant ?? "NULL"} AS variant, started_at, finished_at FROM ${name}
            WHERE id = ? AND player_id = ?`,
         )
         .bind(runId, playerId)
@@ -65,7 +69,7 @@ export function createRunTable({ db, now, randomBytes }, { name, variant }) {
       if (row === null) return null;
       return {
         seed: Number(row.seed),
-        variant: String(row.variant),
+        variant: row.variant === null ? null : String(row.variant),
         startedAt: Number(row.started_at),
         finished: row.finished_at !== null,
       };

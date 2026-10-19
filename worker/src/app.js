@@ -3,6 +3,7 @@ import { createDuels } from "./duels.js";
 import { BadRequestError, readObject } from "./http.js";
 import { createLeaderboard } from "./leaderboard.js";
 import { createMazeRuns } from "./maze-runs.js";
+import { createPirateRuns } from "./pirate-runs.js";
 import { createPlayers } from "./players.js";
 import { createRooms } from "./rooms.js";
 
@@ -36,6 +37,7 @@ export function createApp(deps) {
   const players = createPlayers(deps);
   const mazeRuns = createMazeRuns(deps);
   const colorRuns = createColorRuns(deps);
+  const pirateRuns = createPirateRuns(deps);
   const duels = createDuels({ ...deps, playerExists: players.exists });
   const leaderboard = createLeaderboard(deps);
 
@@ -94,6 +96,20 @@ export function createApp(deps) {
       player: true,
       handler: async ({ request, params: [runId], playerId }) =>
         colorRuns.finish(playerId, runId, await readObject(request)),
+    },
+    {
+      method: "POST",
+      path: /^\/pirate-runs$/,
+      player: true,
+      handler: async ({ request, playerId }) =>
+        pirateRuns.start(playerId, await readObject(request)),
+    },
+    {
+      method: "POST",
+      path: /^\/pirate-runs\/([^/]+)\/finish$/,
+      player: true,
+      handler: async ({ request, params: [runId], playerId }) =>
+        pirateRuns.finish(playerId, runId, await readObject(request)),
     },
     {
       method: "POST",

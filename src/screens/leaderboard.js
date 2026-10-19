@@ -6,7 +6,7 @@ import { TARGET_LANGUAGES } from "../games/color-invasion/colors.js";
 /** @typedef {import("../core/app.js").App} App */
 /** @typedef {{nickname: string, timeMs: number}} MazeEntry */
 /** @typedef {{nickname: string, wins: number}} DuelEntry */
-/** @typedef {{nickname: string, score: number}} ColorEntry */
+/** @typedef {{nickname: string, score: number}} ScoreEntry */
 /** @typedef {import("../games/color-invasion/colors.js").TargetLanguage} TargetLanguage */
 /**
  * @template Entry
@@ -16,7 +16,8 @@ import { TARGET_LANGUAGES } from "../games/color-invasion/colors.js";
  * @typedef {object} Leaderboard
  * @property {Rankings<MazeEntry>} maze
  * @property {Rankings<DuelEntry>} duels
- * @property {Record<TargetLanguage, Rankings<ColorEntry>>} colors One ranking per language.
+ * @property {Record<TargetLanguage, Rankings<ScoreEntry>>} colors One ranking per language.
+ * @property {Rankings<ScoreEntry>} pirates Pirate Loot: the loot, as a score.
  */
 
 /** @type {import("../core/app.js").Screen} */
@@ -52,7 +53,7 @@ function _sections(app, board) {
   const time = (entry) => formatTime(entry.timeMs);
   /** @param {DuelEntry} entry */
   const wins = (entry) => String(entry.wins);
-  /** @param {ColorEntry} entry */
+  /** @param {ScoreEntry} entry */
   const points = (entry) => String(entry.score);
   const languages = /** @type {[TargetLanguage, string][]} */ (Object.entries(TARGET_LANGUAGES));
   return [
@@ -68,6 +69,7 @@ function _sections(app, board) {
         me,
       ),
     ),
+    _section(t, "🏴‍☠️ " + t("pirateLoot.title"), board.pirates, t("leaderboard.gold"), points, me),
   ];
 }
 

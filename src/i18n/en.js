@@ -52,6 +52,7 @@ export default {
   "leaderboard.time": "Time",
   "leaderboard.wins": "Wins",
   "leaderboard.points": "Points",
+  "leaderboard.gold": "Gold",
   "leaderboard.sending": "Sending…",
   "leaderboard.added": "Added!",
   "leaderboard.failed": "Could not send it.",

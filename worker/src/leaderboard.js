@@ -9,7 +9,7 @@ import { TARGET_LANGUAGES } from "../../src/games/color-invasion/colors.js";
  * never input.
  * @typedef {object} BestRunQuery
  * @property {string} table
- * @property {string} variant The column that splits the rankings, such as the level.
+ * @property {string} filter Which runs count, such as `level = ?` for one ranking per level.
  * @property {string} value The column ranked on.
  * @property {"ASC" | "DESC"} order
  * @property {string} field What the value is called in the response.
@@ -19,7 +19,7 @@ const TOP = 10;
 /** @type {BestRunQuery} */
 const MAZE_TIMES = {
   table: "maze_runs",
-  variant: "level",
+  filter: "level = ?",
   value: "time_ms",
   order: "ASC",
   field: "timeMs",
@@ -27,7 +27,15 @@ const MAZE_TIMES = {
 /** @type {BestRunQuery} */
 const COLOR_SCORES = {
   table: "color_runs",
-  variant: "lang",
+  filter: "lang = ?",
+  value: "score",
+  order: "DESC",
+  field: "score",
+};
+/** @type {BestRunQuery} Captains thrown overboard score 0 and aren't ranked. */
+const PIRATE_SCORES = {
+  table: "pirate_runs",
+  filter: "score > 0",
   value: "score",
   order: "DESC",
   field: "score",
@@ -44,10 +52,10 @@ export function createLeaderboard({ db, now }) {
   /**
    * Each player's best finished run of one kind (the earlier run on a tie), best first.
    * @param {BestRunQuery} query
-   * @param {string} variantValue Such as the maze level or the color language.
+   * @param {string[]} filterValues For the `?` in the filter, such as the maze level.
    * @param {number} since
    */
-  const bestPerPlayer = async ({ table, variant, value, order, field }, variantValue, since) => {
+  const bestPerPlayer = async ({ table, filter, value, order, field }, filterValues, since) => {
     const { results } = await db
       .prepare(
         `SELECT p.color, p.animal, p.number, best.${value} AS value
@@ -55,13 +63,13 @@ export function createLeaderboard({ db, now }) {
                  ROW_NUMBER() OVER (PARTITION BY player_id ORDER BY ${value} ${order}, finished_at)
                    AS place
                FROM ${table}
-               WHERE ${variant} = ? AND finished_at IS NOT NULL AND finished_at >= ?) AS best
+               WHERE ${filter} AND finished_at IS NOT NULL AND finished_at >= ?) AS best
          JOIN players AS p ON p.id = best.player_id
          WHERE best.place = 1
          ORDER BY best.${value} ${order}, best.finished_at
          LIMIT ?`,
       )
-      .bind(variantValue, since, TOP)
+      .bind(...filterValues, since, TOP)
       .all();
     return results.map((row) => ({ nickname: _nickname(row), [field]: Number(row.value) }));
   };
@@ -91,18 +99,19 @@ export function createLeaderboard({ db, now }) {
       /** @param {string} lang */
       const colorRankings = async (lang) => [
         lang,
-        await rankings((since) => bestPerPlayer(COLOR_SCORES, lang, since)),
+        await rankings((since) => bestPerPlayer(COLOR_SCORES, [lang], since)),
       ];
       return {
         status: 200,
         headers: { "Cache-Control": CACHE_CONTROL },
         body: {
-          maze: await rankings((since) => bestPerPlayer(MAZE_TIMES, "standard", since)),
-          mazeHard: await rankings((since) => bestPerPlayer(MAZE_TIMES, "hard", since)),
+          maze: await rankings((since) => bestPerPlayer(MAZE_TIMES, ["standard"], since)),
+          mazeHard: await rankings((since) => bestPerPlayer(MAZE_TIMES, ["hard"], since)),
           duels: await rankings(duelTop),
           colors: Object.fromEntries(
             await Promise.all(Object.keys(TARGET_LANGUAGES).map(colorRankings)),
           ),
+          pirates: await rankings((since) => bestPerPlayer(PIRATE_SCORES, [], since)),
         },
       };
     },

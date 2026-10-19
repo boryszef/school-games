@@ -6,6 +6,7 @@ import en from "../src/i18n/en.js";
 import { messages as mazeMessages } from "../src/games/robot-maze/i18n.js";
 import { messages as tugMessages } from "../src/games/tug-of-war/i18n.js";
 import { messages as colorMessages } from "../src/games/color-invasion/i18n.js";
+import { messages as pirateMessages } from "../src/games/pirate-loot/i18n.js";
 
 /** @param {Record<string, string>} dict */
 const keys = (dict) => Object.keys(dict).sort();
@@ -24,6 +25,10 @@ test("tug-of-war dictionaries define the same keys in pl and en", () => {
 
 test("color-invasion dictionaries define the same keys in pl and en", () => {
   assert.deepEqual(keys(colorMessages.pl), keys(colorMessages.en));
+});
+
+test("pirate-loot dictionaries define the same keys in pl and en", () => {
+  assert.deepEqual(keys(pirateMessages.pl), keys(pirateMessages.en));
 });
 
 test("translate substitutes named parameters", () => {

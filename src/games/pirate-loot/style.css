@@ -1,0 +1,451 @@
+.pl {
+  --pl-sky-top: #8fd3f4;
+  --pl-sky-bottom: #d6f1fc;
+  --pl-sea-top: #2e86c1;
+  --pl-sea-bottom: #1b4f72;
+  --pl-hull-height: clamp(26px, 8vw, 48px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+@media (prefers-color-scheme: dark) {
+  .pl {
+    --pl-sky-top: #0d1b3d;
+    --pl-sky-bottom: #2c4f86;
+    --pl-sea-top: #1f5f8b;
+    --pl-sea-bottom: #0b2a40;
+  }
+}
+
+.pl-preparing {
+  text-align: center;
+  color: var(--muted);
+}
+
+.pl-goal {
+  max-width: 560px;
+  margin-top: 0;
+  color: var(--muted);
+}
+
+.pl-hud {
+  margin: 0 0 8px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The scene: sky, island, ship and sea. */
+.pl-stage {
+  position: relative;
+  width: 100%;
+  max-width: 560px;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  border-radius: var(--radius);
+  background: linear-gradient(var(--pl-sky-top), var(--pl-sky-bottom));
+}
+
+.pl-coin {
+  width: 1em;
+  height: 1em;
+  flex: none;
+}
+
+.pl-sea {
+  position: absolute;
+  inset: auto 0 0;
+  z-index: 1;
+  height: 26%;
+  background: linear-gradient(var(--pl-sea-top), var(--pl-sea-bottom));
+}
+
+.pl-sea::before {
+  content: "";
+  position: absolute;
+  inset: -8px -40px auto;
+  height: 10px;
+  background: radial-gradient(circle at 50% 100%, var(--pl-sea-top) 9px, transparent 10px) 0 0 /
+    20px 10px repeat-x;
+  animation: pl-waves 2s linear infinite;
+}
+
+@keyframes pl-waves {
+  to {
+    transform: translateX(20px);
+  }
+}
+
+.pl-island {
+  position: absolute;
+  right: -2%;
+  bottom: 17%;
+  z-index: 0;
+  width: 34%;
+  transform: translateX(110%);
+}
+
+.pl-island > svg {
+  display: block;
+  width: 100%;
+}
+
+.pl-stage:not([data-phase="sailing"]) .pl-island {
+  transform: none;
+  transition: transform 700ms ease-out;
+}
+
+.pl-chest {
+  position: absolute;
+  left: 40%;
+  bottom: 18%;
+  width: 42%;
+}
+
+.pl-chest > svg {
+  display: block;
+  width: 100%;
+}
+
+.pl-lid {
+  transform-box: fill-box;
+  transform-origin: 100% 100%;
+}
+
+.pl-gold,
+.pl-treasure {
+  opacity: 0;
+}
+
+.pl-stage:not([data-phase="sailing"]) .pl-lid {
+  transform: rotate(35deg) translate(4px, -6px);
+  transition: transform 400ms 500ms ease-out;
+}
+
+.pl-stage:not([data-phase="sailing"]) .pl-gold,
+.pl-stage:not([data-phase="sailing"]) .pl-treasure {
+  opacity: 1;
+  transition: opacity 300ms 700ms;
+}
+
+.pl-treasure {
+  position: absolute;
+  bottom: 105%;
+  left: 50%;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  margin: 0;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: clamp(0.9rem, 4vw, 1.3rem);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  transform: translateX(-50%);
+  box-shadow: var(--shadow);
+}
+
+/* The ship and its crew. */
+.pl-ship {
+  position: absolute;
+  bottom: 9%;
+  left: 8%;
+  z-index: 2;
+  width: 66%;
+  /* The pirates, the plank and the walk along it are sized from the ship's width. */
+  container-type: inline-size;
+  --pl-pirate-width: min(48px, 13cqw, 84cqw / var(--crew));
+  animation: pl-bob 2.4s ease-in-out infinite;
+}
+
+@keyframes pl-bob {
+  50% {
+    transform: translateY(3px) rotate(-0.6deg);
+  }
+}
+
+.pl-rig {
+  position: absolute;
+  bottom: calc(var(--pl-hull-height) - 4px);
+  left: 32%;
+  z-index: -1;
+  width: 36%;
+}
+
+.pl-hull {
+  display: block;
+  width: 100%;
+  height: var(--pl-hull-height);
+  margin-top: -3px;
+}
+
+/* The captain stands first, next to the plank. */
+.pl-deck {
+  display: flex;
+  align-items: flex-end;
+  padding-left: 14cqw;
+}
+
+.pl-pirate {
+  position: relative;
+  flex: none;
+  width: var(--pl-pirate-width);
+}
+
+.pl-pirate > svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.pl-stage[data-phase="sailing"] .pl-pirate {
+  animation: pl-board 400ms calc(var(--i) * 90ms) ease-out both;
+}
+
+@keyframes pl-board {
+  from {
+    transform: translateY(-60px);
+    opacity: 0;
+  }
+}
+
+.pl-share {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  display: flex;
+  align-items: center;
+  margin: 0;
+  font-size: clamp(0.7rem, 3vw, 1rem);
+  font-weight: 800;
+  transform: translateX(-50%);
+  animation: pl-pop 400ms calc(var(--i) * 80ms) ease-out both;
+}
+
+@keyframes pl-pop {
+  from {
+    transform: translate(-50%, 20px) scale(0.3);
+    opacity: 0;
+  }
+}
+
+.pl-stage[data-phase="cheering"] .pl-pirate > svg {
+  animation: pl-jump 500ms calc(var(--i) * 60ms) ease-in-out 3;
+}
+
+@keyframes pl-jump {
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+/* The crew's faces: happy, or angry when the captain got the split wrong. */
+.pl-face-angry,
+.pl-stage[data-phase="overboard"] .pl-face-happy {
+  display: none;
+}
+
+.pl-stage[data-phase="overboard"] .pl-face-angry {
+  display: inline;
+}
+
+.pl-stage[data-phase="overboard"] .pl-pirate:not(.is-captain) > svg {
+  animation: pl-shake 250ms ease-in-out 5;
+}
+
+@keyframes pl-shake {
+  25% {
+    transform: translateX(-2px) rotate(-4deg);
+  }
+  75% {
+    transform: translateX(2px) rotate(4deg);
+  }
+}
+
+/* Walking the plank: the captain is the first pirate, next to the plank. */
+.pl-plank {
+  position: absolute;
+  bottom: calc(var(--pl-hull-height) - 6px);
+  left: calc(-0.9 * var(--pl-pirate-width));
+  z-index: 1;
+  width: calc(14cqw + 0.9 * var(--pl-pirate-width));
+  height: 5px;
+  border-radius: 2px;
+  background: #8d5524;
+  opacity: 0;
+}
+
+.pl-stage[data-phase="overboard"] .pl-plank {
+  opacity: 1;
+}
+
+.pl-stage[data-phase="overboard"] .is-captain {
+  opacity: 0;
+  transform: translate(calc(-14cqw - 0.9 * var(--pl-pirate-width)), 300%) rotate(-40deg);
+  animation: pl-walk-plank 1.8s 300ms ease-in both;
+}
+
+@keyframes pl-walk-plank {
+  0% {
+    opacity: 1;
+    transform: none;
+  }
+  55% {
+    opacity: 1;
+    transform: translateX(calc(-14cqw - 0.5 * var(--pl-pirate-width)));
+  }
+  65% {
+    opacity: 1;
+    transform: translate(calc(-14cqw - 0.8 * var(--pl-pirate-width)), -10%);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(-14cqw - 0.9 * var(--pl-pirate-width)), 300%) rotate(-40deg);
+  }
+}
+
+.pl-splash {
+  position: absolute;
+  top: -12px;
+  left: 4%;
+  width: 44px;
+  height: 22px;
+  border-radius: 50%;
+  background: radial-gradient(#ffffff 30%, transparent 70%);
+  opacity: 0;
+}
+
+.pl-stage[data-phase="overboard"] .pl-splash {
+  animation: pl-splash 700ms 1.6s ease-out both;
+}
+
+@keyframes pl-splash {
+  30% {
+    opacity: 1;
+    transform: scale(1.4);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(2);
+  }
+}
+
+.pl-shark {
+  position: absolute;
+  top: -14px;
+  left: 100%;
+  width: clamp(28px, 8vw, 44px);
+}
+
+.pl-stage[data-phase="overboard"] .pl-shark {
+  left: 8%;
+  animation: pl-shark 1.4s 1.2s ease-out both;
+}
+
+@keyframes pl-shark {
+  from {
+    left: 100%;
+  }
+}
+
+/* Under the scene: the question with the crew's patience, or the choice after a won trip. */
+.pl-panel {
+  width: min(100%, 360px);
+  margin-top: 12px;
+}
+
+.pl-ask,
+.pl-choice {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.pl-ask[hidden],
+.pl-choice[hidden] {
+  display: none;
+}
+
+.pl-choice .button {
+  width: 100%;
+}
+
+.pl-question,
+.pl-cheer {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.pl-patience {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.pl-fuse {
+  flex: 1;
+  height: 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--border);
+}
+
+.pl-fuse-left {
+  height: 100%;
+  background: linear-gradient(90deg, var(--danger), #f9a825);
+  transition: width 100ms linear;
+}
+
+.pl-seconds {
+  min-width: 3.5ch;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.pl-answer {
+  width: 5ch;
+  font-size: 1.8rem;
+  text-align: center;
+}
+
+.pl-final-loot,
+.pl-right-answer {
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pl-stage,
+  .pl-stage *,
+  .pl-stage *::before {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* On phones the number pad must fit under the scene without scrolling. */
+@media (max-width: 599px) {
+  .pl-goal {
+    margin-bottom: 6px;
+    font-size: 0.85rem;
+  }
+
+  .pl-stage {
+    aspect-ratio: 2 / 1;
+  }
+
+  .pl-panel {
+    margin-top: 6px;
+  }
+
+  .pl-question {
+    font-size: 1.05rem;
+  }
+}

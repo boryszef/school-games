@@ -1,8 +1,8 @@
-# Requirements: Education games platform, "Robot Maze", "Tug of War" and "Color Invasion"
+# Requirements: Education games platform, "Robot Maze", "Tug of War", "Color Invasion" and "Pirate Loot"
 
 ## Summary
 
-Education games is a static web app (HTML, CSS and ES-module JavaScript with no runtime dependencies or backend) that hosts learning games for young kids. The first game, **Robot Maze**, practises the 10×10 multiplication table. The child walks through a 10×10 maze. Ten robots block the path to the exit, and each robot is disabled by typing the product of its cell's coordinates. A wrong answer costs 5 seconds. A faster time is a better result. Players get generated nicknames such as `RedFox1`. Their results and statistics are stored in the browser, and after a game a player can add the score to an online leaderboard. The UI is in Polish and English. The platform has a plug-in contract so more games can be added later. Two-player games connect two browsers directly over WebRTC. A small Cloudflare Worker only passes the connection details between them through a short room code (shown as a link and a QR code). The second game, **Tug of War**, is such a duel: both players get the same multiplication, and the faster correct answer tugs the rope. The third game, **Color Invasion**, trains color names in English, German and Spanish: the child steers a ship and shoots the box whose color matches the word shown. Sources: [plan.md](plan.md), [plan-mobile-improvements.md](plan-mobile-improvements.md), [plan-tug-of-war.md](plan-tug-of-war.md), [plan-pvp-rooms.md](plan-pvp-rooms.md), [plan-leaderboard.md](plan-leaderboard.md), [plan-color-invasion.md](plan-color-invasion.md), [plan-color-invasion-leaderboard.md](plan-color-invasion-leaderboard.md).
+Education games is a static web app (HTML, CSS and ES-module JavaScript with no runtime dependencies or backend) that hosts learning games for young kids. The first game, **Robot Maze**, practises the 10×10 multiplication table. The child walks through a 10×10 maze. Ten robots block the path to the exit, and each robot is disabled by typing the product of its cell's coordinates. A wrong answer costs 5 seconds. A faster time is a better result. Players get generated nicknames such as `RedFox1`. Their results and statistics are stored in the browser, and after a game a player can add the score to an online leaderboard. The UI is in Polish and English. The platform has a plug-in contract so more games can be added later. Two-player games connect two browsers directly over WebRTC. A small Cloudflare Worker only passes the connection details between them through a short room code (shown as a link and a QR code). The second game, **Tug of War**, is such a duel: both players get the same multiplication, and the faster correct answer tugs the rope. The third game, **Color Invasion**, trains color names in English, German and Spanish: the child steers a ship and shoots the box whose color matches the word shown. The fourth game, **Pirate Loot**, practises division: the child is a pirate captain who shares each treasure fairly between the crew. Sources: [plan.md](plan.md), [plan-mobile-improvements.md](plan-mobile-improvements.md), [plan-tug-of-war.md](plan-tug-of-war.md), [plan-pvp-rooms.md](plan-pvp-rooms.md), [plan-leaderboard.md](plan-leaderboard.md), [plan-color-invasion.md](plan-color-invasion.md), [plan-color-invasion-leaderboard.md](plan-color-invasion-leaderboard.md), [plan-pirate-loot.md](plan-pirate-loot.md).
 
 ## R1 – Platform
 
@@ -44,7 +44,7 @@ Education games is a static web app (HTML, CSS and ES-module JavaScript with no 
 
 ## R5 – Quality
 
-- R5.1 The pure logic (maze, path, robots, game state, profiles, storage, i18n parity, room codes, nicknames, the Worker's rooms, players, maze runs, duels and leaderboard, Tug of War rules and message validation, Color Invasion rules, vocabulary and color runs) is unit-tested with `node --test`.
+- R5.1 The pure logic (maze, path, robots, game state, profiles, storage, i18n parity, room codes, nicknames, the Worker's rooms, players, maze runs, duels and leaderboard, Tug of War rules and message validation, Color Invasion rules, vocabulary and color runs, Pirate Loot rules and pirate runs) is unit-tested with `node --test`.
 - R5.2 Pre-commit hooks run Prettier, ESLint, `tsc --checkJs` (JSDoc types), knip (dead code) and the tests.
 - R5.3 The Node version is managed through nvm (`.nvmrc`).
 
@@ -102,13 +102,20 @@ Education games is a static web app (HTML, CSS and ES-module JavaScript with no 
   - When the round ends, the commands are sent to `POST /color-runs/:id/finish`. The Worker replays them with the game's own rules, and the replayed score is the leaderboard score.
   - A run counts only if it is finished within 70 s of its start (the 60 s round plus time for the network). It can be finished once, only by its own player, with at most 1000 commands.
   - If the Worker can't be reached at the start, or the player has no account, the round is played locally and nothing is sent.
-- R8.7 **Rankings.** `#/leaderboard`, linked from the header (🏆) on every screen, shows, for each game, the top 10 all-time and the top 10 this week (since Monday 00:00 UTC):
+- R8.7 **Pirate Loot scores.**
+  - With an account, a game starts with `POST /pirate-runs` and the body `{}`. It returns a run id and a seed, and the server notes the start time. Every crew and treasure comes from that seed.
+  - The game records the player's actions: `{answer, ms}` for each split, where `answer` is the typed number (1–10) or `null` when the time ran out and `ms` is how long the answer took; `"sail"` for sailing again; and `"retire"`.
+  - When the captain retires, the actions are sent to `POST /pirate-runs/:id/finish`. The Worker replays them with the game's own rules, and the loot is the score. A replay that ends overboard scores 0. The game doesn't send such a game, because it has no score to show.
+  - The actions must follow the game and end it, otherwise they are refused. The answer times together may not be longer than the time the server measured between the start and the finish. A run can be finished once, within 1 hour, only by its own player, with at most 1000 actions.
+  - If the Worker can't be reached at the start, or the player has no account, the game is played locally and nothing is sent.
+- R8.8 **Rankings.** `#/leaderboard`, linked from the header (🏆) on every screen, shows, for each game, the top 10 all-time and the top 10 this week (since Monday 00:00 UTC):
   - Robot Maze: each player's best time, fastest first. (Robot Maze – hard is hidden, R4.11.)
   - Tug of War: number of wins, most first.
   - Color Invasion, one ranking per target language (English, Deutsch, Español): each player's best round score, highest first. On equal scores the earlier round ranks higher.
+  - Pirate Loot: each player's best score above 0, highest first. On equal scores the earlier game ranks higher.
   - The current player's row is highlighted.
   - The list is never cached, so a score shows as soon as it has been added.
-- R8.8 **Privacy.** No real names are stored: nicknames are generated. The Worker stores no IP addresses, and keeps only a hash of each token. The token is sent only to the Worker and never to the other player; the other player sees only the public id.
+- R8.9 **Privacy.** No real names are stored: nicknames are generated. The Worker stores no IP addresses, and keeps only a hash of each token. The token is sent only to the Worker and never to the other player; the other player sees only the public id.
 
 ## R9 – Color Invasion rules
 
@@ -130,8 +137,22 @@ Education games is a static web app (HTML, CSS and ES-module JavaScript with no 
 ## R10 – Phones and tablets
 
 - R10.1 The app is meant to be played on phones and tablets as much as on computers. Every screen works from 360 px wide in portrait, without scrolling sideways.
-- R10.2 Every game is playable by touch alone: Robot Maze by tapping neighbouring cells (R4.4) and the number pad (R4.8), Tug of War with the number pad (R7.7), Color Invasion by tapping a column and the 🔥 button (R9.4–R9.5). The phone's own keyboard is never needed.
+- R10.2 Every game is playable by touch alone: Robot Maze by tapping neighbouring cells (R4.4) and the number pad (R4.8), Tug of War with the number pad (R7.7), Color Invasion by tapping a column and the 🔥 button (R9.4–R9.5), Pirate Loot with the number pad and its buttons (R11.4–R11.6). The phone's own keyboard is never needed.
 - R10.3 Buttons and other controls are at least 44 px tall. Maze cells are as big as the screen's width allows.
 - R10.4 Game controls don't zoom the page when tapped quickly twice.
 - R10.5 The number pad is used instead of the phone's keyboard: an answer field doesn't take the focus on a touch screen, so the phone's keyboard doesn't cover the pad.
 - R10.6 Below 600 px wide, the header shows only the app's title and a ☰ button. The button opens a drawer from the right with the leaderboard link, the player link and the language switcher. The drawer closes when a link in it is followed, when the player taps outside it, or with Esc. From 600 px up, the header shows these items in one row.
+
+## R11 – Pirate Loot rules
+
+- R11.1 **Pirate Loot** (`pirate-loot`, icon 🏴‍☠️) is a single-player game that practises division. The player is a pirate captain who goes on trips for treasure.
+- R11.2 Each trip, a random crew of 2–10 pirates comes aboard. The captain is one of them. Every pirate looks a little different.
+- R11.3 The ship sails to an island and finds a chest of `crew × share` gold coins, where the share is a random whole number from 1 to 10. The treasure therefore always splits evenly and is at most 100. A trip never has the same crew and treasure as the trip before.
+- R11.4 The game asks how many coins each pirate gets. The captain types the answer on the keyboard or with the on-screen number pad.
+- R11.5 The crew is impatient. On the first trip the captain has 15 s to answer, and on every later trip 1 s less, but never less than 4 s. The time left is shown.
+- R11.6 A right answer in time deals the coins into equal piles, one per pirate, and the crew cheers. The captain's share is added to the loot. The captain then chooses "Sail again" or "Retire with the loot".
+- R11.7 A wrong answer, or no answer in time, makes the crew angry. They throw the captain to the sharks, the loot is lost and the game ends.
+- R11.8 Retiring ends the game with the loot as the score.
+- R11.9 At the end a result card shows the loot (or that it was lost), the number of trips and, after a mistake, the right division (`42 ÷ 6 = 7`). It offers "Play again" and "Choose another game".
+- R11.10 The game is drawn with HTML, CSS and inline SVG. The trips are animated (coming aboard, sailing, opening the chest, dealing the coins, cheering, walking the plank). With reduced motion turned on in the system, nothing moves.
+- R11.11 Results are not stored in the browser. They are sent to the leaderboard as described in R8.7.
